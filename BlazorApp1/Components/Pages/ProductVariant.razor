@@ -441,14 +441,14 @@
     {
         var temp = ManageVariants.FirstOrDefault(i => i.Id == manage.Id);
         if (temp == null) return;
-        temp.Price = value;
+        temp.Stock = value;
     }
 
     private void HandleInputWeightManageVariant(ManageVariant manage, string? value)
     {
         var temp = ManageVariants.FirstOrDefault(i => i.Id == manage.Id);
         if (temp == null) return;
-        temp.Price = value;
+        temp.Weight = value;
     }
 
     private void HandleInputSetAsMainProductManageVariant(ManageVariant manage, ChangeEventArgs e)
@@ -466,7 +466,6 @@
 }
 
 @* todo: edit variant *@
-@* todo: tampil di list table *@
 @* todo: tampil di list table *@
 
 @* todo: pindahkan manage variant kedalam class untuk menyimpan valuenya: DONE*@
