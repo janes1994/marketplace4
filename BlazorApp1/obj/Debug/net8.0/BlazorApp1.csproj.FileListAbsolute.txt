@@ -40,3 +40,4 @@
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/BlazorApp1.pdb
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/BlazorApp1.genruntimeconfig.cache
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/ref/BlazorApp1.dll
+/Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/BlazorApp1.sourcelink.json
