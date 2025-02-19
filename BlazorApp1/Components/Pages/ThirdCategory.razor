@@ -1,0 +1,261 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using BlazorApp1.Components.Services
+@using static BlazorApp1.Components.Pages.SecondCategory
+@using static BlazorApp1.Components.Pages.FirstCategory
+@rendermode InteractiveServer
+
+@inject CategoryService CategoryService
+
+<h3>Third Category</h3>
+
+<button class="btn btn-primary" @onclick="OnShowModal">Add Third Category</button>
+
+<Modal @ref=modal Title=@modalTitle>
+    <BodyTemplate>
+        <EditForm Model="categoryModel" OnValidSubmit="SaveCategory">
+            <DataAnnotationsValidator />
+            <div>
+                <label>First Category</label>
+                <select class="form-select" @onchange="UpdateFirstCategory">
+                    <option value="" disabled selected>Choose one</option>
+                    @foreach (FirstCategoryView i in FirstCategory)
+                    {
+                        <option value=@i.Id selected="@(i.Id == categoryModel.FirstCategory.Id ? "selected" : null)">@i.Name</option>
+                    }
+                </select>
+                <ValidationMessage For="@(() => categoryModel.FirstCategory)" />
+            </div>
+            <div>
+                <label>Second Category</label>
+                <select class="form-select" disabled="@(SecondCategoryEnabled ? null : "disabled")" @onchange="UpdateSecondCategory">
+                    <option value="" disabled selected>Choose one</option>
+                    @foreach (SecondCategoryView i in SecondCategorySelected)
+                    {
+                        <option value=@i.Id selected="@(i.Id == categoryModel.SecondCategory.Id ? "selected" : null)">@i.Name</option>
+                    }
+                </select>
+                <ValidationMessage For="@(() => categoryModel.FirstCategory)" />
+            </div>
+            <div>
+                <label>Name</label>
+                <input class="form-control" @bind="categoryModel.Name"/>
+                <ValidationMessage For="@(() => categoryModel.Name)"/>
+            </div>
+            <div>
+                <label>Icon</label>
+                <input class="form-control" @bind="categoryModel.Icon"/>
+                <ValidationMessage For="@(() => categoryModel.Icon)"/>
+            </div>
+            <div>
+                <label>Banner</label>
+                <input class="form-control" @bind="categoryModel.Banner"/>
+                <ValidationMessage For="@(() => categoryModel.Banner)"/>
+            </div>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
+
+<table>
+    <tr>
+        <th>No.</th>
+        <th>First category name</th>
+        <th>Second category name</th>
+        <th>Name</th>
+        <th>Icon</th>
+        <th>Banner</th>
+        <th>Action</th>
+    </tr>
+    @foreach (var (category, index) in Categories.Select((c, i) => (c, i + 1)))
+    {
+        <tr>
+            <td>@index</td>
+            <td>@category.FirstCategory.Name</td>
+            <td>@category.SecondCategory.Name</td>
+            <td>@category.Name</td>
+            <td>@category.Icon</td>
+            <td>@category.Banner</td>
+            <td>
+                <button class="btn btn-warning btn-sm" @onclick="() => OnEditCategory(category)">Edit</button>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteCategory(category)">Delete</button>
+            </td>
+        </tr>
+    }
+</table>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await OnThirdCategorySelected.InvokeAsync(Categories);
+
+        CategoryService.SetThirdCategory(Categories);
+    }
+
+    private Modal modal = default!;
+    private string modalTitle = "Add third category";
+    private async Task OnShowModal()
+    {
+        categoryModel = new();
+        modalTitle = "Add Category";
+        isEditing = false;
+        
+        SecondCategoryEnabled = false;
+
+        await modal.ShowAsync();
+    }
+    private async Task OnHideModal()
+    {
+        SecondCategoryEnabled = false;
+
+        await modal.HideAsync();
+    }
+
+    public class ThirdCategoryView
+    {
+        public ThirdCategoryView()
+        {
+            FirstCategory = new FirstCategoryView();
+            SecondCategory = new SecondCategoryView();
+        }
+
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Required(ErrorMessage = "Nane is required")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Icon is required")]
+        public string Icon { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Banner is required")]
+        public string Banner { get; set; } = string.Empty;
+
+        public string FirstCategoryId { get; set; } = string.Empty;
+        public string SecondCategoryId { get; set; } = string.Empty;
+        public FirstCategoryView FirstCategory { get; set; }
+        public SecondCategoryView SecondCategory { get; set; }
+    }
+    private ThirdCategoryView categoryModel = new ThirdCategoryView();
+
+    private List<ThirdCategoryView> Categories = new()
+    {
+        new() 
+        { 
+            Id = "1", 
+            Name = "Lenovo",
+            Banner = "Banner",
+            Icon = "Icon", 
+            FirstCategory = new FirstCategoryView 
+            {
+                 Id = "1", 
+                 Name = "Computer", 
+                 Banner = "banner", 
+                 Icon = "Icon"
+            },
+            SecondCategory = new SecondCategoryView
+            {
+                Id = "1",
+                Name = "Desktop",
+                Banner = "Banner",
+                Icon = "Icon",
+                FirstCategory = new FirstCategoryView()
+                {
+                    Id = "1", 
+                    Name = "Computer", 
+                    Banner = "banner", 
+                    Icon = "Icon"
+                }
+            } 
+        }   
+    };
+    private bool isEditing = false;
+    [Parameter] public EventCallback<List<ThirdCategoryView>> OnThirdCategorySelected { get; set; }
+    private async Task SaveCategory()
+    {
+        if (isEditing)
+        {
+            var existingCategory = Categories.FirstOrDefault(c => c.Id == categoryModel.Id);
+            if (existingCategory != null)
+            {
+                existingCategory.FirstCategory = categoryModel.FirstCategory;
+                existingCategory.Name = categoryModel.Name;
+                existingCategory.Icon = categoryModel.Icon;
+                existingCategory.Banner = categoryModel.Banner;
+            }
+        }
+        else 
+        {
+            Categories.Add(new ThirdCategoryView
+            {
+                FirstCategory = categoryModel.FirstCategory,
+                SecondCategory = categoryModel.SecondCategory,
+                Name = categoryModel.Name,
+                Icon = categoryModel.Icon,
+                Banner = categoryModel.Banner,
+            });
+        }
+
+        await OnThirdCategorySelected.InvokeAsync(Categories);
+
+        CategoryService.SetThirdCategory(Categories);
+
+        categoryModel = new ThirdCategoryView();
+
+        await OnHideModal();
+    }
+
+    [Parameter] public List<FirstCategoryView> FirstCategory { get; set; }
+    private bool SecondCategoryEnabled = false;
+    private void UpdateFirstCategory(ChangeEventArgs e)
+    {
+        var selectedId = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(selectedId))
+        {
+            categoryModel.FirstCategory = FirstCategory.FirstOrDefault(c => c.Id == selectedId);
+            SecondCategoryEnabled = true;
+            SecondCategorySelected = GetSecondCategoriesFor(selectedId);
+        }
+        else 
+        {
+            SecondCategoryEnabled = false;
+        }
+    }
+
+    private List<SecondCategoryView> GetSecondCategoriesFor(string firstCategoryId)
+    {
+        return SecondCategory.Where(i => i.FirstCategory.Id == firstCategoryId).ToList();
+        
+    }
+
+    [Parameter] public List<SecondCategoryView> SecondCategory { get; set; }
+    public List<SecondCategoryView> SecondCategorySelected { get; set; } = new();
+    private void UpdateSecondCategory(ChangeEventArgs e)
+    {
+        var selectedId = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(selectedId))
+        {
+            categoryModel.SecondCategory = SecondCategory.FirstOrDefault(c => c.Id == selectedId);
+        }
+    }
+
+    private async Task OnEditCategory (ThirdCategoryView category) 
+    {
+        categoryModel = new ThirdCategoryView
+        {
+            Id = category.Id,
+            FirstCategory = category.FirstCategory,
+            SecondCategory = category.SecondCategory,
+            Name = category.Name,
+            Icon = category.Icon,
+            Banner = category.Banner
+        };
+        modalTitle = "Edit Category";
+        isEditing = true;
+        SecondCategoryEnabled = true;
+        await modal.ShowAsync();
+    }
+
+    private void DeleteCategory(ThirdCategoryView category)
+    {
+        Categories.Remove(category);
+    }
+}

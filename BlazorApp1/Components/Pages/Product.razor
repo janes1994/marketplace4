@@ -1,0 +1,296 @@
+﻿@page "/product"
+@rendermode InteractiveServer
+
+@using BlazorApp1.Components.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@using BlazorApp1.Components.Pages
+@using static BlazorApp1.Components.Pages.ThirdCategory
+@using static BlazorApp1.Components.Pages.SecondCategory
+
+@inject CategoryService CategoryService
+
+<PageTitle>Product Management</PageTitle>
+
+<style>
+    table {
+        font-family: Arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+    td, th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+        vertical-align: top;
+    }
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    .table-images {
+        display: flex;
+        @* flex-direction: column; *@
+        gap: 5px;
+    }
+    .table-images img {
+        max-width: 80px;
+        max-height: 80px;
+        @* object-fit: cover; *@
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+    .image-preview-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .image-preview {
+        position: relative;
+        display: inline-block;
+    }
+    .image-preview img {
+        max-width: 120px;
+        max-height: 120px;
+        @* object-fit: cover; *@
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .image-preview button {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: red;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 12px;
+        padding: 2px 5px;
+        border-radius: 50%;
+    }
+</style>
+
+<h3>Product Management</h3>
+<button class="btn btn-primary" @onclick="OnShowAddModal">Add Product</button>
+
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Images</th>
+        <th>Actions</th>
+    </tr>
+    @foreach (var product in products)
+    {
+        <tr>
+            <td>@product.Name</td>
+            <td>
+                <div class="table-images">
+                    @foreach (var img in product.Images)
+                    {
+                        <img src="@img" />
+                    }
+                </div>
+            </td>
+            <td>
+                <button class="btn btn-warning btn-sm" @onclick="() => OnEditProduct(product)">Edit</button>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteProduct(product)">Delete</button>
+            </td>
+        </tr>
+    }
+</table>
+
+<Modal @ref="modal" Title="@modalTitle" Size="ModalSize.ExtraLarge">
+    <BodyTemplate>
+        <EditForm Model="productModel" OnValidSubmit="SaveProduct">
+            <DataAnnotationsValidator />
+            <div class="row">
+                <div class="col-md-6">
+                    <div>
+                        <label class="form-label">Name *</label>
+                        <input class="form-control" @bind="productModel.Name" />
+                        <ValidationMessage For="@(() => productModel.Name)" />
+                    </div>
+                    <div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" @onchange="UpdateFirstCategory">
+                                <option value="" disabled selected>Select first category</option>
+                                @if (@CategoryService.FirstCategory.Count() > 0)
+                                {
+                                    @foreach (var i in @CategoryService.FirstCategory)
+                                    {
+                                        <option value=@i?.Id>@i?.Name</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <select class="form-select" @onchange="UpdateSecondCategory" disabled="@(SecondCategoryEnabled ? null : "disabled")">
+                                <option value="" disabled selected>Select second category</option>
+                                @foreach (var i in @SelectedSecondCategoryView)
+                                {
+                                    <option value=@i.Id>@i.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <select class="form-select" disabled="@(ThirdCategoryEnabled ? null : "disabled")">
+                                <option value="" disabled selected>Select third category</option>
+                                @foreach (var i in @SelectedThirdCategoryView)
+                                {
+                                    <option value=@i.Id>@i.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="border p-3 mb-3">
+                        <label class="form-label">Product Images</label>
+                        <InputFile OnChange="OnFilesSelected" multiple />
+                        <div class="image-preview-container">
+                            @foreach (var img in productModel.Images)
+                            {
+                                <div class="image-preview">
+                                    <img src="@img" />
+                                    <button type="button" @onclick="() => RemoveImage(img)">×</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div>
+                        <ProductVariant />
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
+
+@code {
+    private class ProductView
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        
+        [Required(ErrorMessage = "Product name is required.")]
+        public string Name { get; set; } = string.Empty;
+        
+        public List<string> Images { get; set; } = new();
+    }
+
+    private List<ProductView> products = new()
+    {
+        new() { Id = "1", Name = "Laptop", Images = new List<string> { "laptop.jpg" } },
+        new() { Id = "2", Name = "Phone", Images = new List<string> { "phone.jpg" } },
+        new() { Id = "3", Name = "Tablet", Images = new List<string> { "tablet.jpg" } }
+    };
+
+    private ProductView productModel = new();
+    private Modal modal = default!;
+    private string modalTitle = "Add Product";
+    private bool isEditing = false;
+
+    private async Task OnShowAddModal()
+    {
+        productModel = new ProductView();
+        modalTitle = "Add Product";
+        isEditing = false;
+        await modal.ShowAsync();
+    }
+
+    private async Task OnEditProduct(ProductView product)
+    {
+        productModel = new ProductView
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Images = new List<string>(product.Images)
+        };
+        modalTitle = "Edit Product";
+        isEditing = true;
+        await modal.ShowAsync();
+    }
+
+    private async Task OnHideModal()
+    {
+        await modal.HideAsync();
+    }
+
+    private async Task SaveProduct()
+    {
+        
+        if (isEditing)
+        {
+            var existingProduct = products.FirstOrDefault(p => p.Id == productModel.Id);
+            if (existingProduct != null)
+            {
+                existingProduct.Name = productModel.Name;
+                existingProduct.Images = new List<string>(productModel.Images);
+            }
+        }
+        else
+        {
+            products.Add(new ProductView
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = productModel.Name,
+                Images = new List<string>(productModel.Images)
+            });
+        }
+
+        await OnHideModal();
+    }
+
+    private void DeleteProduct(ProductView product)
+    {
+        products.Remove(product);
+    }
+
+    private async Task OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles())
+        {
+            using var stream = new MemoryStream();
+            await file.OpenReadStream().CopyToAsync(stream);
+            var base64 = Convert.ToBase64String(stream.ToArray());
+            var contentType = file.ContentType;
+
+            productModel.Images.Add($"data:{contentType};base64,{base64}");
+        }
+    }
+
+    private void RemoveImage(string image)
+    {
+        productModel.Images.Remove(image);
+    }
+
+    private List<SecondCategoryView> SelectedSecondCategoryView { get; set; } = new();
+
+    private bool SecondCategoryEnabled = false;
+
+    private void UpdateFirstCategory(ChangeEventArgs e)
+    {
+        var selectedId = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(selectedId))
+        {
+            SelectedSecondCategoryView = CategoryService.SecondCategory.Where(i => i.FirstCategory.Id == selectedId).ToList();
+            SecondCategoryEnabled = true;
+            SelectedThirdCategoryView = new();
+        }
+    }
+
+    private List<ThirdCategoryView> SelectedThirdCategoryView { get; set; } = new();
+
+    private bool ThirdCategoryEnabled = false;
+
+    private void UpdateSecondCategory(ChangeEventArgs e)
+    {
+        var selectedId = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(selectedId))
+        {
+            SelectedThirdCategoryView = CategoryService.ThirdCategory.Where(i => i.SecondCategory.Id == selectedId).ToList();
+            ThirdCategoryEnabled = true;
+        }
+    }
+}

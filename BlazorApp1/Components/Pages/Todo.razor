@@ -1,0 +1,79 @@
+﻿@page "/todo"
+@rendermode InteractiveServer
+
+<PageTitle>Todo</PageTitle>
+
+<h3>Todo</h3>
+<form @onsubmit="AddTodo">
+    <input @bind="inputValue" />
+    <button class="btn btn-primary" >Add</button>
+</form>
+
+<ul>
+    @foreach (string i in todos)
+    {
+        <li>
+            @if (i != editTodo)
+            {
+                    <span>@i</span>
+                    <button class="btn btn-warning" @onclick="() => UpdateTodo(i)">Update</button>
+                    <button class="btn btn-danger" @onclick="() => RemoveTodo(i)">Remove</button>
+                
+            }
+            else 
+            {
+                    <form @onsubmit="() => SaveUpdate(i)">
+                        <input @bind="updatedValue"/>
+                        <button class="btn btn-success">Save</button>
+                        <button class="btn btn-secondary" @onclick="() => CancelTodo(i)">Cancel</button>
+                    </form>
+
+            }
+        </li>
+    }
+</ul>
+
+@code {
+    private List<string> todos = [];
+    private string? inputValue { get; set; }
+    private string? editTodo { get; set; }
+    private string? updatedValue { get; set; }
+
+    private void AddTodo()
+    {
+        if (!string.IsNullOrEmpty(inputValue))
+        {
+            todos.Add(inputValue);
+            inputValue = string.Empty;
+        }
+    }
+
+    private void RemoveTodo(string param)
+    {
+        todos.Remove(param);
+    }
+
+    private void UpdateTodo(string param)
+    {
+        updatedValue = param;
+        editTodo = param;        
+    }
+
+    private void SaveUpdate(string param)
+    {
+        if (!string.IsNullOrEmpty(updatedValue))
+        {
+            int index = todos.IndexOf(param);
+            if (index != -1)
+            {
+                todos[index] = updatedValue;
+            }
+        }
+        editTodo = null;
+    }
+
+    private void CancelTodo(string param)
+    {
+        editTodo = null;
+    }
+}

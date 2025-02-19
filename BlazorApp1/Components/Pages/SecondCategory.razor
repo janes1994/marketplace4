@@ -1,0 +1,249 @@
+﻿@rendermode InteractiveServer
+
+@using BlazorApp1.Components.Services
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@using static BlazorApp1.Components.Pages.ThirdCategory
+@using static BlazorApp1.Components.Pages.FirstCategory
+
+@inject CategoryService CategoryService
+
+<style>
+    table {
+    font-family: Arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+    }
+    td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+    vertical-align: top;
+    }
+    tr:nth-child(even) {
+    background-color: #f2f2f2;
+    }
+</style>
+
+<h3>Second Category</h3>
+
+<button class="btn btn-primary" @onclick="OnShowAddModal">Add Second Category</button>
+
+<Modal @ref=modal Title=@modalTitle>
+    <BodyTemplate>
+        <EditForm Model="categoryModel" OnValidSubmit="SaveCategory">
+            <DataAnnotationsValidator />
+            <div>
+                <label>First Category</label>
+                <select class="form-select" @onchange="UpdateFirstCategory">
+                    <option value="" disabled selected>Choose one</option>
+                    @foreach (FirstCategoryView i in SelectedCategory)
+                    {
+                        <option value=@i.Id selected="@(i.Id == categoryModel.FirstCategory.Id ? "selected" : null)">@i.Name</option>    
+                    }
+                </select>
+                <ValidationMessage For="@(() => categoryModel.FirstCategory)" />
+            </div>
+            <div>
+                <label>Name</label>
+                <input class="form-control" @bind="categoryModel.Name"/>
+                <ValidationMessage For="@(() => categoryModel.Name)"/>
+            </div>
+            <div>
+                <label>Icon</label>
+                <input class="form-control" @bind="categoryModel.Icon"/>
+                <ValidationMessage For="@(() => categoryModel.Icon)"/>
+            </div>
+            <div>
+                <label>Banner</label>
+                <input class="form-control" @bind="categoryModel.Banner"/>
+                <ValidationMessage For="@(() => categoryModel.Banner)"/>
+            </div>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
+
+<table>
+    <tr>
+        <th>No.</th>
+        <th>First category name</th>
+        <th>Name</th>
+        <th>Icon</th>
+        <th>Banner</th>
+        <th>Action</th>
+    </tr>
+    @foreach (var (category, index) in Categories.Select((c, i) => (c, i + 1)))
+    {
+        <tr>
+            <td>@index</td> <!-- Display number starting from 1 -->
+            <td>@category.FirstCategory.Name</td>
+            <td>@category.Name</td>
+            <td>@category.Icon</td>
+            <td>@category.Banner</td>
+            <td>
+                <button class="btn btn-warning btn-sm" @onclick="() => OnEditCategory(category)">Edit</button>
+                <button class="btn btn-danger btn-sm" @onclick="() => ShowConfirmationAsync(category)">Delete</button>
+            </td>
+        </tr>
+    }
+</table>
+
+<ConfirmDialog @ref="dialog" />
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await OnSecondCategorySelected.InvokeAsync(Categories);
+
+        CategoryService.SetSecondCategory(Categories);
+    }
+    
+    [Parameter] public List<FirstCategoryView> SelectedCategory { get; set; }
+    [Parameter] public List<ThirdCategoryView> ThirdCategory { get; set; }
+    public class SecondCategoryView
+    {
+        public SecondCategoryView()
+        {
+            FirstCategory = new FirstCategoryView();
+        }
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Required(ErrorMessage = "Name is required")]
+        public string Name { get; set; } = string.Empty;
+        [Required(ErrorMessage = "First category is required")]
+        public FirstCategoryView FirstCategory { get; set; }
+        
+        public string FirstCategoryId { get; set; } = string.Empty; // Store only the ID
+
+        [Required(ErrorMessage = "Icon is required")]
+        public string Icon { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Banner is required")]
+        public string Banner { get; set; } = string.Empty;
+    }
+
+    private SecondCategoryView categoryModel = new SecondCategoryView();
+
+    private List<SecondCategoryView> Categories = new ()
+    {
+        new() { Id = "1", Name = "Desktop", FirstCategory = new FirstCategoryView { Id = "1", Name = "Computer", Banner = "banner", Icon = "icon" }, Icon = "Computer Icon", Banner = "Computer Banner"},   
+        new() { Id = "2", Name = "Laptop", FirstCategory = new FirstCategoryView { Id = "1", Name = "Computer", Banner = "banner", Icon = "icon" }, Icon = "Phone Icon", Banner = "Phone Banner"}
+    };
+    private Modal modal = default!;
+    private string modalTitle = "Add second category";
+    private bool isEditing = false;
+    
+    private async Task OnShowAddModal()
+    {
+        categoryModel = new();
+        modalTitle = "Add Category";
+        isEditing = false;
+
+        await modal.ShowAsync();
+    }
+
+    private async Task OnEditCategory (SecondCategoryView category) 
+    {
+        categoryModel = new SecondCategoryView
+        {
+            Id = category.Id,
+            FirstCategory = category.FirstCategory,
+            Name = category.Name,
+            Icon = category.Icon,
+            Banner = category.Banner
+        };
+        modalTitle = "Edit Category";
+        isEditing = true;
+        await modal.ShowAsync();
+    }
+
+    private async void DeleteCategory(SecondCategoryView category)
+    {
+        Categories.Remove(category);
+
+        await OnRemoveThirdCategory.InvokeAsync(category);
+
+        CategoryService.SetSecondCategory(Categories);
+    }
+
+    private async Task OnHideModal()
+    {
+        await modal.HideAsync();
+    }
+
+    private async Task SaveCategory()
+    {
+        if (isEditing)
+        {
+            var existingCategory = Categories.FirstOrDefault(c => c.Id == categoryModel.Id);
+            if (existingCategory != null)
+            {
+                existingCategory.FirstCategory = categoryModel.FirstCategory;
+                existingCategory.Name = categoryModel.Name;
+                existingCategory.Icon = categoryModel.Icon;
+                existingCategory.Banner = categoryModel.Banner;
+            }
+        }
+        else 
+        {
+            Categories.Add(new SecondCategoryView
+            {
+                FirstCategory = categoryModel.FirstCategory,
+                Name = categoryModel.Name,
+                Icon = categoryModel.Icon,
+                Banner = categoryModel.Banner
+            });
+        }
+
+        await OnSecondCategorySelected.InvokeAsync(Categories);
+
+        CategoryService.SetSecondCategory(Categories);
+
+        categoryModel = new SecondCategoryView();
+
+        await OnHideModal();
+    }
+
+    private void UpdateFirstCategory(ChangeEventArgs e)
+    {
+        var selectedId = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(selectedId))
+        {
+            categoryModel.FirstCategory = SelectedCategory.FirstOrDefault(c => c.Id == selectedId);
+        }
+    }
+
+    [Parameter] public EventCallback<List<SecondCategoryView>> OnSecondCategorySelected { get; set; }
+
+    [Parameter] public EventCallback<SecondCategoryView> OnRemoveThirdCategory { get; set; }
+    
+    private ConfirmDialog dialog;
+
+    private async Task ShowConfirmationAsync(SecondCategoryView category)
+    {
+        @* var isExist = Categories.Where(category => ThirdCategory.Any(s => s.Id == category.Id)); *@
+        var isExist = ThirdCategory.Where(i => i.SecondCategory.Id == category.Id);
+
+        if (isExist.Count() > 0)
+        {
+            var confirmation = await dialog.ShowAsync(
+                title: "Are you sure you want to delete this?",
+                message1: "This will delete the record. Once deleted can not be rolled back.",
+                message2: "Do you want to proceed?");
+
+            if (confirmation)
+            {
+                DeleteCategory(category);
+            }
+            else
+            {
+                // do whatever
+            }
+        }
+        else 
+        {
+            DeleteCategory(category);
+        }
+    }
+}

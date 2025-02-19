@@ -1,0 +1,62 @@
+﻿@page "/category"
+@using static BlazorApp1.Components.Pages.ThirdCategory
+@using static BlazorApp1.Components.Pages.SecondCategory
+@using static BlazorApp1.Components.Pages.FirstCategory
+@rendermode InteractiveServer
+
+<PageTitle>Category Management</PageTitle>
+
+<FirstCategory 
+    OnCategorySelected="HandleCategoryChange"
+    OnRemoveSecondCategory="RemoveSecondCategory"
+    SelectedCategory="@secondCategory"
+/>
+
+<SecondCategory 
+    OnSecondCategorySelected="HandleSecondCategoryChange" 
+    OnRemoveThirdCategory="RemoveThirdCategory"
+    SelectedCategory="@selectedCategory"
+    ThirdCategory="@thirdCategory"
+/>
+
+<ThirdCategory
+    OnThirdCategorySelected="HandleThirdCategoryChange" 
+    FirstCategory="@selectedCategory"
+    SecondCategory="@secondCategory"
+/>
+
+@code {
+
+    public List<FirstCategoryView> selectedCategory = new();
+    public List<SecondCategoryView> secondCategory = new();
+    public List<ThirdCategoryView> thirdCategory = new();
+
+    public void HandleCategoryChange(List<FirstCategoryView> category)
+    {
+        selectedCategory = category;
+    }
+
+    public void HandleSecondCategoryChange(List<SecondCategoryView> category)
+    {
+        secondCategory = category;
+    }
+    public void HandleThirdCategoryChange(List<ThirdCategoryView> category)
+    {
+        thirdCategory = category;
+    }
+
+    public void RemoveSecondCategory(FirstCategoryView firstCategoryView)
+    {
+        foreach (var i in secondCategory)
+        {
+            RemoveThirdCategory(i);
+        }
+
+        secondCategory.RemoveAll(i => i.FirstCategory.Id == firstCategoryView.Id);
+    }
+
+    public void RemoveThirdCategory(SecondCategoryView secondCategoryView)
+    {
+        thirdCategory.RemoveAll(i => i.SecondCategory.Id == secondCategoryView.Id);
+    }
+}

@@ -1,0 +1,374 @@
+﻿@rendermode InteractiveServer
+
+<style>
+    .variant-container {
+        border: 1px solid#eeedeb;
+        border-radius: 8px;
+        padding: 12px;
+    }
+    .notes {
+        font-size: small;
+    }
+    .main-variant {
+        display: flex;
+    }
+    .main-variant-btn {
+        padding: 8px 12px;
+        background-color: #eeedeb;
+        border-radius: 16px;
+        margin: 10px;
+        cursor: pointer;
+        min-width: 80px;
+        text-align: center;
+    }
+    .main-variant-btn-selected {
+        background-color: #c2f3a9;
+    }
+    .main-variant-header {
+        display: flex;
+        justify-content: space-between;
+    }
+    .add-btn {
+        color: green;
+        cursor: pointer;
+    }
+
+    .fade-box {
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        height: 0;
+        overflow: hidden;
+    }
+
+    .fade-box.show {
+        opacity: 1;
+        transform: translateY(0);
+        height: auto;
+    }
+
+    .fade-box.hide {
+        opacity: 0;
+        transform: translateY(-10px);
+        height: 0;
+    }
+
+    .subvariant-container-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .subvariant-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .subvariant-content {
+        max-width: 120px;
+        max-height: 120px;
+        border-radius: 16px;
+    }
+    .subvariant-remove {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: red;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 50%;
+    }
+
+    .variantlist-container-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .variantlist-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .variantlist-content {
+        max-width: 120px;
+        max-height: 120px;
+        border-radius: 16px;
+    }
+    .variantlist-remove {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: red;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 50%;
+    }
+
+</style>
+
+<div class="mb-3 form-check">
+    <input class="form-check-input" type="checkbox" id="createVariantCB" @bind="isChecked"/>
+    <label class="form-check-label" for="createVariantCB">Create variant</label>
+</div>
+
+<div class="@($"fade-box {(isChecked ? "show" : "hide")}")" >
+    <div>Variant Type</div>
+    <p class="notes">Choose maximum 2 variant type</p>
+
+    <div class="mb-3 variantlist-container-container">
+        @foreach (var i in VariantType)
+        {
+            <div class="variantlist-container">
+                <div class="@($"variantlist-content main-variant-btn {(i.IsSelected ? "main-variant-btn-selected" : "")}")" @onclick="() => SelectVariant(i)">@i.Name</div>
+                <span class="variantlist-remove" @onclick="() => RemoveVariant(i)">x</span>
+            </div>
+        }
+    </div>
+
+    @if (IsExceedTwoVariant)
+    {
+        <div>Maximum 2 variants can be selected</div>
+    }
+
+    <div class="main-variant-header mb-3">
+        <div class="add-btn" @onclick="ToggleCreateVariantType">Create variant type</div>
+    </div>
+
+    <div class="mb-3 p-3 border" hidden="@(toggleCreateVariantType == false ? "hidden" : null)">
+        <input class="form-control mb-3" placeholder="Variant type name"
+            @bind=variantName @bind:event="oninput"
+            @onkeydown="HandleEnterKey" />
+
+        <div class="btn btn-primary" @onclick="AddCreateVariantType">Add</div>
+    </div>
+
+    @foreach (var i in selectedVariant)
+    {
+        <div class="main-variant-header">
+            <div>@i.Name</div>
+            <div class="add-btn" @onclick="() => ToggleSubVariant(i)">Add</div>
+        </div>
+
+        <div class="subvariant-container-container">
+            @foreach (var j in i.SubVariantTypeNames)
+            {
+                <div class="subvariant-container">
+                    <div class="subvariant-content main-variant-btn main-variant-btn-selected">@j.Name</div>
+                    <span class="subvariant-remove" @onclick="() => RemoveSubVariant(i, j)">x</span>
+                </div>
+            }
+        </div>
+
+        <div class="mb-3 p-3 border" hidden="@(i.ShowSubVariant ? null : "hidden")">
+            <input class="form-control mb-3" placeholder="Variant color name" 
+                @bind=subVariantName @bind:event="oninput"
+                @onkeydown="(e) => HandleEnterKeyAddSubVariant(e, i)" />
+            <div class="btn btn-primary" @onclick="() => AddSubVariant(i)">Add</div>
+        </div>
+
+    }
+
+    <div class="main-variant-header">
+        <div>Manage variant</div>
+        <div class="add-btn" @onclick="ToggleManageVariant">Add</div>
+    </div>
+
+    @if (toggleManageVariant)
+    {
+        <div class="variant-container">
+
+        @for (int i = 0; i < selectedVariant.Count; i++)
+        {
+            if (selectedVariant[i]?.SubVariantTypeNames == null) continue;
+
+            // Get the first variant (Color)
+            var firstVariant = selectedVariant[i];
+
+            for (int j = i + 1; j < selectedVariant.Count; j++)
+            {
+                if (selectedVariant[j]?.SubVariantTypeNames == null) continue;
+
+                // Get the second variant (Size)
+                var secondVariant = selectedVariant[j];
+
+                foreach (var color in firstVariant.SubVariantTypeNames)
+                {
+                    foreach (var size in secondVariant.SubVariantTypeNames)
+                    {
+                        <div class="main-variant-header mb-3">
+                            <div>@color.Name - @size.Name</div>
+                            <div>
+                                <input @onchange="() => SetMainProduct()" type="checkbox"/>
+                                <label>Set as main product</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Price</label>
+                            <input class="form-control"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Stock</label>
+                            <input class="form-control"/>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Weight</label>
+                            <input class="form-control"/>
+                        </div>
+                    }
+                }
+            }
+        }
+
+        </div>
+    }
+
+</div>
+
+
+@code {
+    @* protected override async Task OnInitializedAsync()
+    {
+
+    } *@
+
+    public class VariantTypeName
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string? Name { get; set; }
+        public bool ShowSubVariant { get; set; } = false;
+        public bool IsSelected { get; set; } = false;
+        public List<SubVariantTypeName> SubVariantTypeNames { get; set; } = new();
+    }
+
+    public class SubVariantTypeName
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string? Name { get; set; }
+        public VariantTypeName variantTypeName { get; set; } = new();
+    }
+
+    private bool isChecked = false;
+    private bool toggleCreateVariantType = false;
+    private void ToggleCreateVariantType()
+    {
+        toggleCreateVariantType = !toggleCreateVariantType;
+    }
+    private string? variantName { get; set; }
+    private List<VariantTypeName> VariantType { get; set; } = new() 
+    {
+        new VariantTypeName() { Name = "Color", Id = "1" }, 
+        new VariantTypeName() { Name = "Size", Id = "2" } 
+    };
+
+    private void HandleEnterKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            AddCreateVariantType();
+        }
+    }
+
+    private void AddCreateVariantType()
+    {
+        if (!string.IsNullOrEmpty(variantName))
+        {
+            VariantType.Add(new VariantTypeName() { Name = variantName, Id = Guid.NewGuid().ToString() });
+            variantName = null;
+            ToggleCreateVariantType();
+        }
+    }
+
+    private void HandleEnterKeyAddSubVariant(KeyboardEventArgs e, VariantTypeName variant)
+    {
+        if (e.Key == "Enter")
+        {
+            AddSubVariant(variant);
+        }
+    }
+
+    private string? subVariantName { get; set;}
+
+    private void AddSubVariant(VariantTypeName variant)
+    {
+        if (!string.IsNullOrEmpty(subVariantName))
+        {
+            var temp = VariantType.Where(i => i.Id == variant.Id).FirstOrDefault();
+            var subVariant = new SubVariantTypeName { Name = subVariantName, Id = Guid.NewGuid().ToString() };
+            temp?.SubVariantTypeNames.Add(subVariant);
+            subVariantName = null;
+            ToggleSubVariant(variant);
+        }
+    }
+
+    private void ToggleSubVariant(VariantTypeName variant)
+    {
+        variant.ShowSubVariant = !variant.ShowSubVariant;
+    }
+
+    private bool toggleManageVariant { get; set; }
+    private void ToggleManageVariant(MouseEventArgs args)
+    {
+        toggleManageVariant = !toggleManageVariant;
+    }
+    private List<VariantTypeName> selectedVariant { get; set; } = new();
+    private bool IsExceedTwoVariant = false;
+    private void SelectVariant(VariantTypeName? selectedVariantParam)
+    {
+        if (selectedVariantParam == null || selectedVariantParam.Name == string.Empty) return;
+
+        var temp = selectedVariant.Where(i => i.Id == selectedVariantParam.Id).FirstOrDefault();
+        if (temp != null)
+        {
+            selectedVariantParam.IsSelected = false;
+            IsExceedTwoVariant = false;
+            selectedVariant.Remove(temp);
+        }
+        else 
+        {
+            if (selectedVariant.Count < 2)
+            {
+                selectedVariantParam.IsSelected = true; 
+                selectedVariant.Add(selectedVariantParam);
+                IsExceedTwoVariant = false;
+            }
+            else 
+            {
+                selectedVariantParam.IsSelected = false;
+                selectedVariant.Remove(selectedVariantParam);
+                IsExceedTwoVariant = true;
+            }
+        }
+    }
+    private void RemoveSubVariant(VariantTypeName variant, SubVariantTypeName subVariant)
+    {
+        variant.SubVariantTypeNames.Remove(subVariant);
+    }
+
+    private void RemoveVariant(VariantTypeName variant)
+    {
+        VariantType.Remove(variant);
+        selectedVariant.Remove(variant);
+    }
+
+    private void SetMainProduct()
+    {
+
+    }
+}
+
+@* todo: upload github *@
+@* todo: pindahkan manage variant kedalam class untuk menyimpan valuenya*@
+@* todo: manage variant bisa handle satu subvariant dari satu variant *@
+@* todo: set main product hanya 1 *@
+@* todo: update variant *@
+@* todo: tampil di list table *@
