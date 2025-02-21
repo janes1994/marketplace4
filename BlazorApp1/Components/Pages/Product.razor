@@ -5,10 +5,12 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using System.ComponentModel.DataAnnotations
 @using BlazorApp1.Components.Pages
+@using static BlazorApp1.Components.Pages.ProductVariant
 @using static BlazorApp1.Components.Pages.ThirdCategory
 @using static BlazorApp1.Components.Pages.SecondCategory
 
 @inject CategoryService CategoryService
+@inject ProductService ProductService
 
 <PageTitle>Product Management</PageTitle>
 
@@ -159,7 +161,9 @@
                 </div>
                 <div class="col-md-6">
                     <div>
-                        <ProductVariant />
+                        <ProductVariant 
+                            ProductVariantView="@productModel.ProductVariantView"
+                            SetVariantTypeName="SetVariantTypeName"/>
                     </div>
                 </div>
             </div>
@@ -169,7 +173,12 @@
 </Modal>
 
 @code {
-    private class ProductView
+    protected override async Task OnInitializedAsync()
+    {
+        products = ProductService.ProductViews;
+    }
+
+    public class ProductView
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         
@@ -177,14 +186,25 @@
         public string Name { get; set; } = string.Empty;
         
         public List<string> Images { get; set; } = new();
+
+        public bool IsHasVariant = false;
+        public ProductVariantView ProductVariantView { get; set; } = new();
     }
 
-    private List<ProductView> products = new()
+    public class ProductVariantView
+    {
+        public List<VariantTypeName> VariantTypeNames { get; set; } = new();
+        public List<ManageVariant> ManageVariants { get; set; } = new();
+    }
+
+    @* private List<ProductView> products = new()
     {
         new() { Id = "1", Name = "Laptop", Images = new List<string> { "laptop.jpg" } },
         new() { Id = "2", Name = "Phone", Images = new List<string> { "phone.jpg" } },
         new() { Id = "3", Name = "Tablet", Images = new List<string> { "tablet.jpg" } }
-    };
+    }; *@
+
+    private List<ProductView> products = new();
 
     private ProductView productModel = new();
     private Modal modal = default!;
@@ -205,7 +225,8 @@
         {
             Id = product.Id,
             Name = product.Name,
-            Images = new List<string>(product.Images)
+            Images = new List<string>(product.Images),
+            ProductVariantView = product.ProductVariantView
         };
         modalTitle = "Edit Product";
         isEditing = true;
@@ -235,9 +256,12 @@
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = productModel.Name,
-                Images = new List<string>(productModel.Images)
+                Images = new List<string>(productModel.Images),
+                ProductVariantView = productModel.ProductVariantView
             });
         }
+
+        ProductService.SetProduct(products);
 
         await OnHideModal();
     }
@@ -292,5 +316,10 @@
             SelectedThirdCategoryView = CategoryService.ThirdCategory.Where(i => i.SecondCategory.Id == selectedId).ToList();
             ThirdCategoryEnabled = true;
         }
+    }
+
+    public void SetVariantTypeName(List<VariantTypeName> variantTypeNames)
+    {
+        productModel.ProductVariantView.VariantTypeNames = variantTypeNames;
     }
 }

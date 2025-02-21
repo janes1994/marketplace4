@@ -1,4 +1,5 @@
-﻿@rendermode InteractiveServer
+﻿@using static BlazorApp1.Components.Pages.Product
+@rendermode InteractiveServer
 
 <style>
     .variant-container {
@@ -223,10 +224,23 @@
 </div>
 
 @code {
-    @* protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
+        if (productVariantView.VariantTypeNames.Count() == 0)
+        {
+            VariantType = new List<VariantTypeName>()
+            {
+                new VariantTypeName() { Name = "Color", Id = "1" }, 
+                new VariantTypeName() { Name = "Size", Id = "2" } 
+            };
+        }
+        else 
+        {
+            VariantType = productVariantView.VariantTypeNames;
+        }
 
-    } *@
+        isChecked = productVariantView.VariantTypeNames.Count() > 0 ? true : false;
+    }
 
     public class VariantTypeName
     {
@@ -251,11 +265,13 @@
         toggleCreateVariantType = !toggleCreateVariantType;
     }
     private string? variantName { get; set; }
-    private List<VariantTypeName> VariantType { get; set; } = new() 
+    @* private List<VariantTypeName> VariantType { get; set; } = new() 
     {
         new VariantTypeName() { Name = "Color", Id = "1" }, 
         new VariantTypeName() { Name = "Size", Id = "2" } 
-    };
+    }; *@
+
+    private List<VariantTypeName> VariantType { get; set; } = new();
 
     private void HandleEnterKey(KeyboardEventArgs e)
     {
@@ -272,6 +288,7 @@
             VariantType.Add(new VariantTypeName() { Name = variantName, Id = Guid.NewGuid().ToString() });
             variantName = null;
             ToggleCreateVariantType();
+            SetVariantTypeName.InvokeAsync(VariantType);
         }
     }
 
@@ -463,7 +480,17 @@
         manage.IsMainProduct = isChecked;
     }
 
+    [Parameter] public EventCallback<List<VariantTypeName>> SetVariantTypeName { get; set; }
+    [Parameter] public ProductVariantView productVariantView { get; set; } = new();
+
 }
+
+@* 
+    todo: edit variant -> 
+        handle variant selected, 
+        handle subvariant,
+        handle manage variant
+*@
 
 @* todo: edit variant *@
 @* todo: tampil di list table *@

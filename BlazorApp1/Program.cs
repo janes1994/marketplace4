@@ -10,6 +10,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddBlazorBootstrap();
 
 builder.Services.AddSingleton<CategoryService>();
+builder.Services.AddSingleton<ProductService>();
 
 var app = builder.Build();
 
