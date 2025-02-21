@@ -152,7 +152,7 @@
         <div class="btn btn-primary" @onclick="AddCreateVariantType">Add</div>
     </div>
 
-    @foreach (var i in selectedVariant)
+    @foreach (var i in VariantType.Where(i => i.IsSelected))
     {
         <div class="main-variant-header">
             <div>@i.Name</div>
@@ -188,6 +188,8 @@
         <div class="variant-container">
             @foreach (var i in ManageVariants)
             {
+                var checkboxId = $"setIsMainProduct{i.Id}";
+
                 <div class="main-variant-header mb-3">
                     @if (!string.IsNullOrEmpty(i.SecondVariantId))
                     {
@@ -198,25 +200,25 @@
                         <div>@i.FirstVariantName</div>
                     }
                     <div>
-                        <input type="checkbox"
+                        <input type="checkbox" id="@checkboxId"
                             checked="@i.IsMainProduct"
                             @onchange="(e) => HandleInputSetAsMainProductManageVariant(i, e)" />
 
-                        <label>Set as main product</label>
+                        <label for="@checkboxId">Set as main product</label>
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Price</label>
-                    <input class="form-control" @oninput="(e) => HandleInputPriceManageVariant(i, e.Value?.ToString())"/>
+                    <input class="form-control" @oninput="(e) => HandleInputPriceManageVariant(i, e.Value?.ToString())" @bind="i.Price"/>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Stock</label>
-                    <input class="form-control" @oninput="(e) => HandleInputStockManageVariant(i, e.Value?.ToString())"/>
+                    <input class="form-control" @oninput="(e) => HandleInputStockManageVariant(i, e.Value?.ToString())" @bind="i.Stock"/>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Weight</label>
-                    <input class="form-control" @oninput="(e) => HandleInputWeightManageVariant(i, e.Value?.ToString())"/>
+                    <input class="form-control" @oninput="(e) => HandleInputWeightManageVariant(i, e.Value?.ToString())" @bind="i.Weight"/>
                 </div>
             }
         </div>
@@ -224,7 +226,12 @@
 </div>
 
 @code {
-    protected override async Task OnInitializedAsync()
+    [Parameter] public EventCallback<List<VariantTypeName>> SetVariantTypeName { get; set; }
+    [Parameter] public EventCallback<List<ManageVariant>> SetManageVariant { get; set; }
+    
+    [Parameter] public ProductVariantView productVariantView { get; set; } = new();
+
+    protected override void OnInitialized()
     {
         if (productVariantView.VariantTypeNames.Count() == 0)
         {
@@ -237,9 +244,11 @@
         else 
         {
             VariantType = productVariantView.VariantTypeNames;
+            ManageVariants = productVariantView.ManageVariants;
         }
 
         isChecked = productVariantView.VariantTypeNames.Count() > 0 ? true : false;
+        if (isChecked) toggleManageVariant = true;
     }
 
     public class VariantTypeName
@@ -255,6 +264,10 @@
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string? Name { get; set; }
+        public string? Price { get; set; }
+        public string? Stock { get; set; }
+        public string? Weight { get; set; }
+        public bool IsMainProduct { get; set; }
         public VariantTypeName variantTypeName { get; set; } = new();
     }
 
@@ -265,11 +278,6 @@
         toggleCreateVariantType = !toggleCreateVariantType;
     }
     private string? variantName { get; set; }
-    @* private List<VariantTypeName> VariantType { get; set; } = new() 
-    {
-        new VariantTypeName() { Name = "Color", Id = "1" }, 
-        new VariantTypeName() { Name = "Size", Id = "2" } 
-    }; *@
 
     private List<VariantTypeName> VariantType { get; set; } = new();
 
@@ -325,6 +333,7 @@
     {
         toggleManageVariant = !toggleManageVariant;
         CalculateManageVariant();
+        SetVariantTypeName.InvokeAsync(VariantType);
     }
 
     public class ManageVariant
@@ -346,53 +355,57 @@
     {
         List<ManageVariant> res = new();
 
-        if (selectedVariant.Count == 0)
+        if (VariantType.Count == 0)
         {
             ManageVariants = res;
             return;
         }
 
-        var firstVariant = selectedVariant[0];
+        var firstVariant = VariantType[0];
 
-        if (selectedVariant.Count == 1 || selectedVariant[1].IsSelected == false || selectedVariant[1].SubVariantTypeNames.Count == 0)
+        if (VariantType.Count == 1 || VariantType[1].IsSelected == false || VariantType[1].SubVariantTypeNames.Count == 0)
         {
             // If only one variant is selected, create entries using only that variant
             foreach (var subVariant in firstVariant.SubVariantTypeNames)
             {
+                var manageVariantTemp = ManageVariants.Where(i => i.FirstVariantId == subVariant.Id).FirstOrDefault();
+
                 var temp = new ManageVariant()
                 {
                     FirstVariantId = subVariant.Id,
                     FirstVariantName = subVariant.Name,
                     SecondVariantId = null,  // No second variant
                     SecondVariantName = null,
-                    Price = null,
-                    Stock = null,
-                    Weight = null,
-                    IsMainProduct = false
+                    Price = manageVariantTemp?.Price ?? string.Empty,
+                    Stock = manageVariantTemp?.Stock ?? string.Empty,
+                    Weight = manageVariantTemp?.Weight ?? string.Empty,
+                    IsMainProduct = manageVariantTemp?.IsMainProduct ?? false,
                 };
 
                 res.Add(temp);
             }
         }
-        else if (selectedVariant.Count > 1)
+        else if (VariantType.Count > 1)
         {
             // Handle two variants as before
-            var secondVariant = selectedVariant[1];
+            var secondVariant = VariantType[1];
 
             foreach (var color in firstVariant.SubVariantTypeNames)
             {
                 foreach (var size in secondVariant.SubVariantTypeNames)
                 {
+                    var manageVariantTemp = ManageVariants.Where(i => i.FirstVariantId == color.Id && i.SecondVariantId == size.Id).FirstOrDefault();
+                    
                     var temp = new ManageVariant()
                     {
                         FirstVariantId = color.Id,
                         FirstVariantName = color.Name,
                         SecondVariantId = size.Id,
                         SecondVariantName = size.Name,
-                        Price = null,
-                        Stock = null,
-                        Weight = null,
-                        IsMainProduct = false
+                        Price = manageVariantTemp?.Price ?? string.Empty,
+                        Stock = manageVariantTemp?.Stock ?? string.Empty,
+                        Weight = manageVariantTemp?.Weight ?? string.Empty,
+                        IsMainProduct = color?.IsMainProduct ?? false
                     };
 
                     res.Add(temp);
@@ -401,39 +414,45 @@
         }
 
         ManageVariants = res;
+
+        SetManageVariant.InvokeAsync(ManageVariants);
     }
 
-
-    private List<VariantTypeName> selectedVariant { get; set; } = new();
     private bool IsExceedTwoVariant = false;
     private void SelectVariant(VariantTypeName? selectedVariantParam)
     {
         if (selectedVariantParam == null || selectedVariantParam.Name == string.Empty) return;
 
-        var temp = selectedVariant.Where(i => i.Id == selectedVariantParam.Id).FirstOrDefault();
-        if (temp != null)
+        var temp = VariantType.Where(i => i.Id == selectedVariantParam.Id).FirstOrDefault();
+
+        if (temp == null) return;
+
+        temp.IsSelected = !temp.IsSelected;
+
+        if (CountTotalSelected() > 2) 
         {
-            selectedVariantParam.IsSelected = false;
-            IsExceedTwoVariant = false;
-            selectedVariant.Remove(temp);
+            temp.IsSelected = false;
+            IsExceedTwoVariant = true;
+            return;
         }
-        else 
-        {
-            if (selectedVariant.Count < 2)
-            {
-                selectedVariantParam.IsSelected = true; 
-                selectedVariant.Add(selectedVariantParam);
-                IsExceedTwoVariant = false;
-            }
-            else 
-            {
-                selectedVariantParam.IsSelected = false;
-                selectedVariant.Remove(selectedVariantParam);
-                IsExceedTwoVariant = true;
-            }
-        }
+        
+        IsExceedTwoVariant = false;
+
         CalculateManageVariant();
+        SetVariantTypeName.InvokeAsync(VariantType);
+
     }
+
+    private int CountTotalSelected()
+    {
+        int totalSelected = 0;
+        foreach (var i in VariantType)
+        {
+            if (i.IsSelected) totalSelected++;
+        }
+        return totalSelected;
+    }
+
     private void RemoveSubVariant(VariantTypeName variant, SubVariantTypeName subVariant)
     {
         variant.SubVariantTypeNames.Remove(subVariant);
@@ -443,8 +462,9 @@
     private void RemoveVariant(VariantTypeName variant)
     {
         VariantType.Remove(variant);
-        selectedVariant.Remove(variant);
+        VariantType.Remove(variant);
         CalculateManageVariant();
+        SetVariantTypeName.InvokeAsync(VariantType);
     }
 
     private void HandleInputPriceManageVariant(ManageVariant manage, string? value)
@@ -480,21 +500,9 @@
         manage.IsMainProduct = isChecked;
     }
 
-    [Parameter] public EventCallback<List<VariantTypeName>> SetVariantTypeName { get; set; }
-    [Parameter] public ProductVariantView productVariantView { get; set; } = new();
+    
 
 }
 
-@* 
-    todo: edit variant -> 
-        handle variant selected, 
-        handle subvariant,
-        handle manage variant
-*@
-
-@* todo: edit variant *@
+@* todo: default set main product satu *@
 @* todo: tampil di list table *@
-
-@* todo: pindahkan manage variant kedalam class untuk menyimpan valuenya: DONE*@
-@* todo: manage variant bisa handle satu subvariant dari satu variant: DONE *@
-@* todo: set main product hanya 1: DONE *@

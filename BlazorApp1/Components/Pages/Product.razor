@@ -163,7 +163,8 @@
                     <div>
                         <ProductVariant 
                             ProductVariantView="@productModel.ProductVariantView"
-                            SetVariantTypeName="SetVariantTypeName"/>
+                            SetVariantTypeName="SetVariantTypeName" 
+                            SetManageVariant="SetManageVariant"/>
                     </div>
                 </div>
             </div>
@@ -321,5 +322,10 @@
     public void SetVariantTypeName(List<VariantTypeName> variantTypeNames)
     {
         productModel.ProductVariantView.VariantTypeNames = variantTypeNames;
+    }
+
+    public void SetManageVariant(List<ManageVariant> manageVariants)
+    {
+        productModel.ProductVariantView.ManageVariants = manageVariants;
     }
 }
