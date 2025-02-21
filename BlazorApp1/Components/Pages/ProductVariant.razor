@@ -415,7 +415,20 @@
 
         ManageVariants = res;
 
+        SetOneMainProduct();
+
         SetManageVariant.InvokeAsync(ManageVariants);
+    }
+
+    private void SetOneMainProduct()
+    {
+        if (ManageVariants.Count() == 0) return;
+        bool IsAnyMainProduct = ManageVariants.Any(i => i.IsMainProduct);
+
+        if (IsAnyMainProduct == false)
+        {
+            ManageVariants[0].IsMainProduct = true;
+        }
     }
 
     private bool IsExceedTwoVariant = false;
@@ -504,5 +517,6 @@
 
 }
 
-@* todo: default set main product satu *@
+@* todo: default set main product satu: DONE *@
 @* todo: tampil di list table *@
+@* todo: styling variant *@
