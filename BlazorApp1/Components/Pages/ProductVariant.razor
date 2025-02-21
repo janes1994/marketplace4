@@ -361,9 +361,16 @@
             return;
         }
 
+        if (VariantType[0]?.IsSelected == false && VariantType[1]?.IsSelected == false)
+        {
+            ManageVariants = [];
+            SetManageVariant.InvokeAsync(ManageVariants);
+            return;
+        }
+
         var firstVariant = VariantType[0];
 
-        if (VariantType.Count == 1 || VariantType[1].IsSelected == false || VariantType[1].SubVariantTypeNames.Count == 0)
+        if (VariantType.Count == 1 || VariantType[1]?.IsSelected == false || VariantType[1].SubVariantTypeNames.Count == 0)
         {
             // If only one variant is selected, create entries using only that variant
             foreach (var subVariant in firstVariant.SubVariantTypeNames)
@@ -385,7 +392,7 @@
                 res.Add(temp);
             }
         }
-        else if (VariantType.Count > 1)
+        else if (VariantType.Count > 1 && VariantType[0].IsSelected && VariantType[1].IsSelected)
         {
             // Handle two variants as before
             var secondVariant = VariantType[1];
@@ -475,7 +482,6 @@
     private void RemoveVariant(VariantTypeName variant)
     {
         VariantType.Remove(variant);
-        VariantType.Remove(variant);
         CalculateManageVariant();
         SetVariantTypeName.InvokeAsync(VariantType);
     }
@@ -520,3 +526,4 @@
 @* todo: default set main product satu: DONE *@
 @* todo: tampil di list table *@
 @* todo: styling variant *@
+@* todo: validasi manage variant input *@
