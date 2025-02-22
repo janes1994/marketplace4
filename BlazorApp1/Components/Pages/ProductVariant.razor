@@ -170,7 +170,7 @@
         </div>
 
         <div class="mb-3 p-3 border" hidden="@(i.ShowSubVariant ? null : "hidden")">
-            <input class="form-control mb-3" placeholder="Variant color name" 
+            <input class="form-control mb-3" placeholder="Sub variant name" 
                 @bind=subVariantName @bind:event="oninput"
                 @onkeydown="(e) => HandleEnterKeyAddSubVariant(e, i)" />
             <div class="btn btn-primary" @onclick="() => AddSubVariant(i)">Add</div>

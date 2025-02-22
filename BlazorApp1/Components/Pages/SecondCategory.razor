@@ -92,15 +92,17 @@
 <ConfirmDialog @ref="dialog" />
 
 @code {
+    [Parameter] public List<SecondCategoryView> SecondCategoryViewModel { get; set; } = new();
+    [Parameter] public List<FirstCategoryView> SelectedCategory { get; set; } = new();
+    [Parameter] public List<ThirdCategoryView> ThirdCategory { get; set; } = new();
+
     protected override async Task OnInitializedAsync()
     {
         await OnSecondCategorySelected.InvokeAsync(Categories);
 
-        CategoryService.SetSecondCategory(Categories);
+        Categories = SecondCategoryViewModel;
     }
     
-    [Parameter] public List<FirstCategoryView> SelectedCategory { get; set; }
-    [Parameter] public List<ThirdCategoryView> ThirdCategory { get; set; }
     public class SecondCategoryView
     {
         public SecondCategoryView()
@@ -125,11 +127,8 @@
 
     private SecondCategoryView categoryModel = new SecondCategoryView();
 
-    private List<SecondCategoryView> Categories = new ()
-    {
-        new() { Id = "1", Name = "Desktop", FirstCategory = new FirstCategoryView { Id = "1", Name = "Computer", Banner = "banner", Icon = "icon" }, Icon = "Computer Icon", Banner = "Computer Banner"},   
-        new() { Id = "2", Name = "Laptop", FirstCategory = new FirstCategoryView { Id = "1", Name = "Computer", Banner = "banner", Icon = "icon" }, Icon = "Phone Icon", Banner = "Phone Banner"}
-    };
+    private List<SecondCategoryView> Categories = new();
+    
     private Modal modal = default!;
     private string modalTitle = "Add second category";
     private bool isEditing = false;

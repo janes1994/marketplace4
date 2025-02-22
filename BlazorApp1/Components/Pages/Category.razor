@@ -1,8 +1,11 @@
 ﻿@page "/category"
+@using BlazorApp1.Components.Services
 @using static BlazorApp1.Components.Pages.ThirdCategory
 @using static BlazorApp1.Components.Pages.SecondCategory
 @using static BlazorApp1.Components.Pages.FirstCategory
 @rendermode InteractiveServer
+
+@inject CategoryService CategoryService
 
 <PageTitle>Category Management</PageTitle>
 
@@ -10,6 +13,7 @@
     OnCategorySelected="HandleCategoryChange"
     OnRemoveSecondCategory="RemoveSecondCategory"
     SelectedCategory="@secondCategory"
+    FirstCategoryViewModel = "@selectedCategory"
 />
 
 <SecondCategory 
@@ -17,15 +21,22 @@
     OnRemoveThirdCategory="RemoveThirdCategory"
     SelectedCategory="@selectedCategory"
     ThirdCategory="@thirdCategory"
+    SecondCategoryViewModel = "@secondCategory"
 />
 
 <ThirdCategory
     OnThirdCategorySelected="HandleThirdCategoryChange" 
     FirstCategory="@selectedCategory"
-    SecondCategory="@secondCategory"
+    ThirdCategoryViewModel = "@thirdCategory"
 />
 
 @code {
+    protected override void OnInitialized()
+    {
+        selectedCategory = CategoryService.FirstCategory;
+        secondCategory = CategoryService.SecondCategory;
+        thirdCategory = CategoryService.ThirdCategory;
+    }
 
     public List<FirstCategoryView> selectedCategory = new();
     public List<SecondCategoryView> secondCategory = new();

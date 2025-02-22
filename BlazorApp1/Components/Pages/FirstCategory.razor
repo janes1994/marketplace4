@@ -78,7 +78,13 @@
 <ConfirmDialog @ref="dialog" />
 
 @code {
-    [Parameter] public List<SecondCategoryView> SelectedCategory { get; set; }
+    [Parameter] public List<FirstCategoryView> FirstCategoryViewModel { get; set; } = new();
+    [Parameter] public List<SecondCategoryView> SelectedCategory { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Categories = FirstCategoryViewModel;
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -101,15 +107,13 @@
 
     private FirstCategoryView categoryModel = new();
 
-    private List<FirstCategoryView> Categories = new ()
-    {
-        new() { Id = "1", Name = "Computer", Icon = "Computer Icon", Banner = "Computer Banner"},   
-        new() { Id = "2", Name = "Phone", Icon = "Phone Icon", Banner = "Phone Banner"}
-    };
+    private List<FirstCategoryView> Categories = new();
+
     private Modal modalFirstCategory = default!;
+
     private string modalTitle = "Add Category";
+
     private bool isEditing = false;
-    
     
     private async Task OnShowAddModal()
     {
