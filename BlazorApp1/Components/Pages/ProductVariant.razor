@@ -228,7 +228,6 @@
 @code {
     [Parameter] public EventCallback<List<VariantTypeName>> SetVariantTypeName { get; set; }
     [Parameter] public EventCallback<List<ManageVariant>> SetManageVariant { get; set; }
-    
     [Parameter] public ProductVariantView productVariantView { get; set; } = new();
 
     protected override void OnInitialized()
@@ -401,12 +400,12 @@
             {
                 foreach (var size in secondVariant.SubVariantTypeNames)
                 {
-                    var manageVariantTemp = ManageVariants.Where(i => i.FirstVariantId == color.Id && i.SecondVariantId == size.Id).FirstOrDefault();
+                    var manageVariantTemp = ManageVariants.Where(i => i.FirstVariantId == color?.Id && i.SecondVariantId == size.Id).FirstOrDefault();
                     
                     var temp = new ManageVariant()
                     {
-                        FirstVariantId = color.Id,
-                        FirstVariantName = color.Name,
+                        FirstVariantId = color?.Id,
+                        FirstVariantName = color?.Name,
                         SecondVariantId = size.Id,
                         SecondVariantName = size.Name,
                         Price = manageVariantTemp?.Price ?? string.Empty,

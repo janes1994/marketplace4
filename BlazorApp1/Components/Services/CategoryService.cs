@@ -1,73 +1,73 @@
-using System;
-using static BlazorApp1.Components.Pages.FirstCategory;
-using static BlazorApp1.Components.Pages.SecondCategory;
-using static BlazorApp1.Components.Pages.ThirdCategory;
+using BlazorApp1.Components.Models;
 
-namespace BlazorApp1.Components.Services;
+namespace BlazorApp1.Components.Services
+{   
+    public class CategoryService
+    {
+        public List<CategoryViewModel> CategoryViewModel { get; private set; } = new();
+        public event Action? OnAction;
 
-public class CategoryService
-{
-    public List<FirstCategoryView> FirstCategory { get; private set; } =
-    [
-        new() { Id = "1", Name = "Computer", Icon = "Computer Icon", Banner = "Computer Banner"},   
-        new() { Id = "2", Name = "Phone", Icon = "Phone Icon", Banner = "Phone Banner"}
-    ];
-    public List<SecondCategoryView> SecondCategory { get; private set; } =
-    [
-        new() { Id = "1", Name = "Desktop", FirstCategory = new FirstCategoryView { Id = "1", Name = "Computer", Banner = "banner", Icon = "icon" }, Icon = "Computer Icon", Banner = "Computer Banner"},
-        new() { Id = "2", Name = "Laptop", FirstCategory = new FirstCategoryView { Id = "1", Name = "Computer", Banner = "banner", Icon = "icon" }, Icon = "Phone Icon", Banner = "Phone Banner"}
-    ];
-    public List<ThirdCategoryView> ThirdCategory { get; private set; } =
-    [
-        new() 
-        { 
-            Id = "1", 
-            Name = "Lenovo",
-            Banner = "Banner",
-            Icon = "Icon", 
-            FirstCategory = new FirstCategoryView 
+        public void AddCategory(CategoryViewModel category)
+        {
+            if (string.IsNullOrEmpty(category.ParentCategoryId))
             {
-                Id = "1", 
-                Name = "Computer", 
-                Banner = "banner", 
-                Icon = "Icon"
-            },
-            SecondCategory = new SecondCategoryView
+                // Adding a root category
+                category.Id = Guid.NewGuid().ToString();
+                CategoryViewModel.Add(category);
+            }
+            else
             {
-                Id = "1",
-                Name = "Desktop",
-                Banner = "Banner",
-                Icon = "Icon",
-                FirstCategory = new FirstCategoryView()
+                // Adding a subcategory
+                var parent = FindCategory(CategoryViewModel, category.ParentCategoryId);
+                if (parent != null)
                 {
-                    Id = "1", 
-                    Name = "Computer", 
-                    Banner = "banner", 
-                    Icon = "Icon"
+                    category.Id = Guid.NewGuid().ToString();
+                    category.ParentCategory = parent;
+                    parent.Subcategories.Add(category);
                 }
-            } 
-        }   
-    ];
+            }
+            OnAction?.Invoke();
+        }
 
-    public event Action? OnFirstCategoryChanged;
-    public event Action? OnSecondCategoryChanged;
-    public event Action? OnThirdCategoryChanged;
+        public void UpdateCategory(CategoryViewModel category)
+        {
+            var existing = FindCategory(CategoryViewModel, category.Id);
+            if (existing != null)
+            {
+                existing.Name = category.Name;
+                existing.Icon = category.Icon;
+                existing.Banner = category.Banner;
+                OnAction?.Invoke();
+            }
+        }
 
-    public void SetCategory(List<FirstCategoryView> firstcategory)
-    {
-        FirstCategory = firstcategory;
-        OnFirstCategoryChanged?.Invoke();
-    }
+        public void RemoveCategory(CategoryViewModel category)
+        {
+            if (category.ParentCategory == null)
+            {
+                // Removing a root category
+                CategoryViewModel.RemoveAll(c => c.Id == category.Id);
+            }
+            else
+            {
+                // Removing a subcategory
+                category.ParentCategory.Subcategories.RemoveAll(c => c.Id == category.Id);
+            }
+            OnAction?.Invoke();
+        }
 
-    public void SetSecondCategory(List<SecondCategoryView> secondcategory)
-    {
-        SecondCategory = secondcategory;
-        OnSecondCategoryChanged?.Invoke();
-    }
+        private CategoryViewModel? FindCategory(List<CategoryViewModel> categories, string id)
+        {
+            foreach (var category in categories)
+            {
+                if (category.Id == id)
+                    return category;
 
-    public void SetThirdCategory(List<ThirdCategoryView> thirdcategory)
-    {
-        ThirdCategory = thirdcategory;
-        OnThirdCategoryChanged?.Invoke();
+                var found = FindCategory(category.Subcategories, id);
+                if (found != null)
+                    return found;
+            }
+            return null;
+        }
     }
 }

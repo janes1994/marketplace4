@@ -1,0 +1,33 @@
+﻿@using BlazorApp1.Components.Models
+
+@if (Categories.Any())
+{
+    <ul class="list-group mt-2 ms-3">
+        @foreach (var category in Categories)
+        {
+            <li class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>@category.Name</span>
+                    <div>
+                        <button class="btn btn-primary btn-sm me-2" @onclick="() => EditCategory(category)">Edit</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => RemoveCategory(category)">Delete</button>
+                        <button class="btn btn-info btn-sm ms-2" @onclick="() => AddSubcategory(category)">Add Subcategory</button>
+                    </div>
+                </div>
+                <CategoryTree Categories="@category.Subcategories" />
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public List<CategoryViewModel> Categories { get; set; } = [];
+
+    [Parameter] public EventCallback<CategoryViewModel> OnEdit { get; set; }
+    [Parameter] public EventCallback<CategoryViewModel> OnRemove { get; set; }
+    [Parameter] public EventCallback<CategoryViewModel> OnAddSubcategory { get; set; }
+
+    private void EditCategory(CategoryViewModel category) => OnEdit.InvokeAsync(category);
+    private void RemoveCategory(CategoryViewModel category) => OnRemove.InvokeAsync(category);
+    private void AddSubcategory(CategoryViewModel category) => OnAddSubcategory.InvokeAsync(category);
+}

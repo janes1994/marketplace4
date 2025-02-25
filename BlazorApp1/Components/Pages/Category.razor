@@ -1,73 +1,154 @@
 ﻿@page "/category"
-@using BlazorApp1.Components.Services
-@using static BlazorApp1.Components.Pages.ThirdCategory
-@using static BlazorApp1.Components.Pages.SecondCategory
-@using static BlazorApp1.Components.Pages.FirstCategory
 @rendermode InteractiveServer
 
+@using BlazorApp1.Components.Models
+@using BlazorApp1.Components.Services
 @inject CategoryService CategoryService
 
-<PageTitle>Category Management</PageTitle>
+<Modal @ref="modalCategory" Title="@modalTitle">
+    <BodyTemplate>
+        <EditForm Model="categoryModel" OnValidSubmit="SaveCategory">
+            <DataAnnotationsValidator />
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input class="form-control" @bind="categoryModel.Name" />
+                <ValidationMessage For="@(() => categoryModel.Name)" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Icon</label>
+                <input class="form-control" @bind="categoryModel.Icon" />
+                <ValidationMessage For="@(() => categoryModel.Icon)" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Banner</label>
+                <input class="form-control" @bind="categoryModel.Banner" />
+                <ValidationMessage For="@(() => categoryModel.Banner)" />
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </EditForm>
+    </BodyTemplate>
+</Modal>
 
-<FirstCategory 
-    OnCategorySelected="HandleCategoryChange"
-    OnRemoveSecondCategory="RemoveSecondCategory"
-    SelectedCategory="@secondCategory"
-    FirstCategoryViewModel = "@selectedCategory"
-/>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <h3>Category</h3>
+        <button class="btn btn-success" @onclick="OnShowAddModal">Add category</button>
+    </div>
 
-<SecondCategory 
-    OnSecondCategorySelected="HandleSecondCategoryChange" 
-    OnRemoveThirdCategory="RemoveThirdCategory"
-    SelectedCategory="@selectedCategory"
-    ThirdCategory="@thirdCategory"
-    SecondCategoryViewModel = "@secondCategory"
-/>
-
-<ThirdCategory
-    OnThirdCategorySelected="HandleThirdCategoryChange" 
-    FirstCategory="@selectedCategory"
-    ThirdCategoryViewModel = "@thirdCategory"
-/>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var (category, index) in rows.Select((c, i) => (c, i + 1)))
+        {
+            <tr>
+                <td>@index</td>
+                <td>
+                    @category.Name
+                </td>
+                <td>
+                    <button class="btn btn-success btn-sm" @onclick="() => AddSubcategory(category.categoryViewModel)">Add subcategory</button>
+                    <button class="btn btn-warning btn-sm" @onclick="() => EditCategory(category.categoryViewModel)">Edit subcategory</button>
+                    <button class="btn btn-danger btn-sm" @onclick="() => RemoveCategory(category.categoryViewModel)">Remove subcategory</button>
+                </td>
+        </tr>
+        }
+        </tbody>
+    </table>
+</div>
 
 @code {
     protected override void OnInitialized()
     {
-        selectedCategory = CategoryService.FirstCategory;
-        secondCategory = CategoryService.SecondCategory;
-        thirdCategory = CategoryService.ThirdCategory;
+        GetCategoryRows();
     }
 
-    public List<FirstCategoryView> selectedCategory = new();
-    public List<SecondCategoryView> secondCategory = new();
-    public List<ThirdCategoryView> thirdCategory = new();
-
-    public void HandleCategoryChange(List<FirstCategoryView> category)
+    public class CategorySimple
     {
-        selectedCategory = category;
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public CategoryViewModel categoryViewModel { get; set; } = new();
     }
-
-    public void HandleSecondCategoryChange(List<SecondCategoryView> category)
+    private List<CategorySimple> rows { get; set; } = [];
+    private void GetCategoryRows()
     {
-        secondCategory = category;
-    }
-    public void HandleThirdCategoryChange(List<ThirdCategoryView> category)
-    {
-        thirdCategory = category;
-    }
-
-    public void RemoveSecondCategory(FirstCategoryView firstCategoryView)
-    {
-        foreach (var i in secondCategory)
+        rows.Clear();
+        foreach (var category in CategoryService.CategoryViewModel)
         {
-            RemoveThirdCategory(i);
+            AddCategoryRow(category, "");
         }
-
-        secondCategory.RemoveAll(i => i.FirstCategory.Id == firstCategoryView.Id);
     }
 
-    public void RemoveThirdCategory(SecondCategoryView secondCategoryView)
+    private void AddCategoryRow(CategoryViewModel category, string parentPath)
     {
-        thirdCategory.RemoveAll(i => i.SecondCategory.Id == secondCategoryView.Id);
+        string fullPath = string.IsNullOrEmpty(parentPath) ? category.Name : $"{parentPath}/{category.Name}";
+
+        var temp = new CategorySimple
+        {
+            Id = category.Id,
+            Name = fullPath,
+            categoryViewModel = category
+        };
+
+        rows.Add(temp);
+
+        foreach (var subcategory in category.Subcategories)
+        {
+            AddCategoryRow(subcategory, fullPath);
+        }
+    }
+
+    private Modal modalCategory = default!;
+    private string modalTitle = "Add Category";
+    private CategoryViewModel categoryModel = new();
+
+    private async Task OnShowAddModal()
+    {
+        categoryModel = new CategoryViewModel();
+        modalTitle = "Add Root Category";
+        await modalCategory.ShowAsync();
+    }
+
+    private async Task AddSubcategory(CategoryViewModel parent)
+    {
+        categoryModel = new CategoryViewModel { ParentCategoryId = parent.Id, ParentCategory = parent };
+        modalTitle = "Add Subcategory";
+        await modalCategory.ShowAsync();
+    }
+
+    private async Task EditCategory(CategoryViewModel category)
+    {
+        categoryModel = new CategoryViewModel
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Icon = category.Icon,
+            Banner = category.Banner,
+            ParentCategoryId = category.ParentCategoryId,
+            ParentCategory = category.ParentCategory
+        };
+        modalTitle = "Edit Category";
+        await modalCategory.ShowAsync();
+    }
+
+    private void RemoveCategory(CategoryViewModel category)
+    {
+        CategoryService.RemoveCategory(category);
+        GetCategoryRows();
+    }
+
+    private async Task SaveCategory()
+    {
+        if (!string.IsNullOrEmpty(categoryModel.Id))
+            CategoryService.UpdateCategory(categoryModel);
+        else
+            CategoryService.AddCategory(categoryModel);
+
+        await modalCategory.HideAsync();
+        GetCategoryRows();
     }
 }

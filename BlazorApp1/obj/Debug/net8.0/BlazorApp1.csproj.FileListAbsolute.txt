@@ -23,6 +23,7 @@
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/BlazorApp1.AssemblyInfo.cs
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/BlazorApp1.csproj.CoreCompileInputs.cache
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/BlazorApp1.MvcApplicationPartsAssemblyInfo.cache
+/Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/BlazorApp1.sourcelink.json
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/staticwebassets.build.json
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/staticwebassets.development.json
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/staticwebassets/msbuild.BlazorApp1.Microsoft.AspNetCore.StaticWebAssets.props
@@ -40,4 +41,3 @@
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/BlazorApp1.pdb
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/BlazorApp1.genruntimeconfig.cache
 /Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/ref/BlazorApp1.dll
-/Users/yanesreksandi/Test/BlazorApp/BlazorApp1/obj/Debug/net8.0/BlazorApp1.sourcelink.json
