@@ -1,0 +1,68 @@
+﻿@using BlazorApp1.Components.Services
+@using static BlazorApp1.Components.Pages.Product
+@inject CategoryService CategoryService
+
+@if (productModel_2?.Count == 0)
+{
+    var parentCategories = CategoryService.CategoryViewModel
+        .Where(i => i.ParentCategoryId == productModel.Category.ParentCategoryId)
+        .ToList();
+
+    <select class="form-select" @onchange="SetSubcategory">
+        <option value="" disabled selected>Select category</option>
+        @foreach (var category in parentCategories)
+        {
+            <option value="@category.Id">@category.Name</option>
+        }
+    </select>
+}
+else 
+{
+    <select class="form-select" @onchange="SetSubcategory">
+        <option value="" disabled selected>Select subcategory</option>
+        @foreach (var option in productModel_2)
+        {
+            <option value="@option.Id">@option.Name</option>
+        }
+    </select>
+
+    @* if (productModel_2?.Count > 0)
+    {
+        <ProductCategoryDropdown 
+            ProductModel_2="@productModel_2[0].CategoryOptions"
+            OnCategorySelected="OnCategorySelected"
+        />
+    } *@
+}
+
+
+@code {
+    [Parameter] public ProductView productModel { get; set; } = new();
+    
+    [Parameter] public List<ProductCategoryView> productModel_2 { get; set; } = new();
+    
+    [Parameter] public EventCallback<List<ProductCategoryView>> OnCategorySelected { get; set; }
+    
+    private List<ProductCategoryView>? subCategories { get; set; }
+    
+    private void SetSubcategory(ChangeEventArgs e)
+    {
+        var selectedId = e.Value?.ToString();
+        if (string.IsNullOrEmpty(selectedId)) return;
+
+        var subCategories = CategoryService.GetSubcategories(selectedId);
+
+        List<ProductCategoryView> tes = subCategories.Select(sc => new ProductCategoryView
+        {
+            Id = sc.Id,
+            Name = sc.Name,
+            ParentCategoryId = sc.ParentCategoryId
+        }).ToList();
+
+        productModel = new();
+
+        productModel_2 = tes;
+
+        OnCategorySelected.InvokeAsync(tes);
+    }
+}

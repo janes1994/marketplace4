@@ -15,45 +15,44 @@
 
 <style>
     .table-images {
-        display: flex;
-        @* flex-direction: column; *@
-        gap: 5px;
+    display: flex;
+    gap: 5px;
     }
     .table-images img {
-        max-width: 80px;
-        max-height: 80px;
-        @* object-fit: cover; *@
-        border-radius: 5px;
-        border: 1px solid #ccc;
+    max-width: 80px;
+    max-height: 80px;
+    @* object-fit: cover; *@
+    border-radius: 5px;
+    border: 1px solid #ccc;
     }
     .image-preview-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
     }
     .image-preview {
-        position: relative;
-        display: inline-block;
+    position: relative;
+    display: inline-block;
     }
     .image-preview img {
-        max-width: 120px;
-        max-height: 120px;
-        @* object-fit: cover; *@
-        border: 1px solid #ccc;
-        border-radius: 5px;
+    max-width: 120px;
+    max-height: 120px;
+    @* object-fit: cover; *@
+    border: 1px solid #ccc;
+    border-radius: 5px;
     }
     .image-preview button {
-        position: absolute;
-        top: 2px;
-        right: 2px;
-        background: red;
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-size: 12px;
-        padding: 2px 5px;
-        border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: red;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 5px;
+    border-radius: 50%;
     }
 </style>
 
@@ -103,20 +102,27 @@
                     </div>
                     <div>
                         <label class="form-label">Category</label>
-                        @foreach (var categoryLevel in SelectedCategories)
-                        {
-                            <div class="mb-3">
-                                <select class="form-select" @onchange="e => UpdateCategory(e, SelectedCategories.IndexOf(categoryLevel))">
-                                    <option value="" disabled selected>Select category</option>
-                                    @foreach (var i in categoryLevel)
-                                    {
-                                        <option value="@i?.Id" selected="@(i?.Id == productModel.Category.Id)">@i?.Name</option>
-                                    }
-                                </select>
-                            </div>
-                        }
-
+                        <div class="mb-3">
+                            <ProductCategoryDropdown 
+                                ProductModel="@productModel"
+                            />
+                        </div>
                     </div>
+                    
+                    <div>
+                        <label class="form-label">Category Tes</label>
+                    
+                        <CategoryTes 
+                            Categories="Categories" 
+                            OnCategorySelected="CategorySelected" 
+                        />
+
+                        @if (SelectedCategory != null)
+                        {
+                            <p>You selected: @SelectedCategory.Name</p>
+                        }
+                    </div>
+
                     <div class="border p-3 mb-3">
                         <label class="form-label">Product Images</label>
                         <InputFile OnChange="OnFilesSelected" multiple />
@@ -149,28 +155,36 @@
     protected override void OnInitialized()
     {
         products = ProductService.ProductViews;
-
-        // Load the root categories initially
-        if (CategoryService.CategoryViewModel.Any())
-        {
-            SelectedCategories.Add(CategoryService.CategoryViewModel.ToList());
-        }
     }
 
     public class ProductView
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
-        
+
         [Required(ErrorMessage = "Product name is required.")]
         public string Name { get; set; } = string.Empty;
-        
+
         public List<string> Images { get; set; } = new();
 
         public bool IsHasVariant = false;
         public ProductVariantView ProductVariantView { get; set; } = new();
 
-        public CategoryViewModel Category { get; set; } = new();
+        public ProductCategoryView Category { get; set; } = new();
     }
+
+    public class ProductCategoryView
+{
+    public string? Id { get; set; }
+    public string? Name { get; set; }
+    public bool IsSelected { get; set; }
+    public string? ParentCategoryId { get; set; }
+    
+    // Current selected category
+    public ProductCategoryView? Category { get; set; }
+    
+    // Available options for this level
+    public List<ProductCategoryView> CategoryOptions { get; set; } = new();
+}
 
     public class ProductVariantView
     {
@@ -215,7 +229,7 @@
 
     private async Task SaveProduct()
     {
-        
+
         if (isEditing)
         {
             var existingProduct = products.FirstOrDefault(p => p.Id == productModel.Id);
@@ -223,7 +237,7 @@
             {
                 existingProduct.Name = productModel.Name;
                 existingProduct.Images = new List<string>(productModel.Images);
-                @* existingProduct *@
+                existingProduct.Category = productModel.Category;
             }
         }
         else
@@ -234,7 +248,7 @@
                 Name = productModel.Name,
                 Images = new List<string>(productModel.Images),
                 ProductVariantView = productModel.ProductVariantView,
-                Category = RootCategory
+                Category = productModel.Category
             });
         }
 
@@ -276,30 +290,101 @@
         productModel.ProductVariantView.ManageVariants = manageVariants;
     }
 
-    public CategoryViewModel RootCategory = new();
+    private void SetSubcategoryOptions(ChangeEventArgs e)
+    {
+        var selectedId = e.Value?.ToString();
 
-    public List<List<CategoryViewModel>> SelectedCategories = new(); // Holds categories at each level
+        if (string.IsNullOrEmpty(selectedId)) return;
 
-    public void UpdateCategory(ChangeEventArgs e, int level)
+        if (productModel.Category == null) return;
+
+        var subCategories = CategoryService.GetSubcategories(selectedId);
+
+        if (subCategories == null || subCategories?.Count == 0) return;
+
+        foreach (var i in subCategories)
+        {
+            var tmp = new ProductCategoryView()
+            {
+                Id = i.Id,
+                Name = i.Name,
+                ParentCategoryId = selectedId
+            };
+
+            if (tmp.Id == selectedId) tmp.IsSelected = true;
+
+            productModel.Category.CategoryOptions.Add(tmp);
+        }
+        StateHasChanged();
+    }
+
+    private void SetSubcategory(ChangeEventArgs e)
     {
         var selectedId = e.Value?.ToString();
         if (string.IsNullOrEmpty(selectedId)) return;
 
-        var selectedCategory = SelectedCategories[level].FirstOrDefault(i => i.Id == selectedId);
+        // Get the selected category from service
+        var selectedCategory = CategoryService.GetCategoryById(selectedId);
+        if (selectedCategory == null) return;
+
+        // Clear existing category options
+        productModel.Category.CategoryOptions?.Clear();
+
+        // Get subcategories for the selected category
+        var subCategories = CategoryService.GetSubcategories(selectedId);
         
-        // Remove deeper levels if selecting a different category at a higher level
-        SelectedCategories = SelectedCategories.Take(level + 1).ToList();
-
-        if (selectedCategory?.Subcategories?.Any() == true)
+        // Create new category structure
+        productModel.Category.Category = new ProductCategoryView
         {
-            SelectedCategories.Add(selectedCategory.Subcategories.ToList());
-        }
+            Id = selectedCategory.Id,
+            Name = selectedCategory.Name,
+            ParentCategoryId = selectedCategory.ParentCategoryId,
+            // Populate subcategories as options
+            CategoryOptions = subCategories.Select(sc => new ProductCategoryView
+            {
+                Id = sc.Id,
+                Name = sc.Name,
+                ParentCategoryId = sc.ParentCategoryId
+            }).ToList()
+        };
 
-        // Set parent category
-        if (string.IsNullOrEmpty(RootCategory.Id) && selectedCategory != null)
-        {
-            RootCategory = selectedCategory;
-        }
+        @* StateHasChanged(); *@
     }
 
+    public class CategoryTesModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public List<CategoryTesModel> Subcategories { get; set; } = new();
+    }
+
+    private List<CategoryTesModel> Categories = new()
+    {
+        new CategoryTesModel { Id = 1, Name = "Electronics", Subcategories = new()
+            {
+                new CategoryTesModel { Id = 2, Name = "Laptops", Subcategories = new()
+                    {
+                        new CategoryTesModel { Id = 3, Name = "Gaming Laptops" },
+                        new CategoryTesModel { Id = 4, Name = "Business Laptops" }
+                    }
+                },
+                new CategoryTesModel { Id = 5, Name = "Phones" }
+            }
+        },
+        new CategoryTesModel { Id = 6, Name = "Furniture", Subcategories = new()
+            {
+                new CategoryTesModel { Id = 7, Name = "Chairs" },
+                new CategoryTesModel { Id = 8, Name = "Tables" }
+            }
+        }
+    };
+
+    private CategoryTesModel? SelectedCategory;
+
+    private void CategorySelected(CategoryTesModel category)
+    {
+        SelectedCategory = category;
+    }
 }
+
+

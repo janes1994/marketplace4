@@ -4,7 +4,7 @@ namespace BlazorApp1.Components.Models;
 
 public class CategoryViewModel
 {
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     [Required(ErrorMessage = "Name is required")]
     public string Name { get; set; } = string.Empty;
@@ -14,8 +14,6 @@ public class CategoryViewModel
 
     [Required(ErrorMessage = "Banner is required")]
     public string Banner { get; set; } = string.Empty;
-
-    public int Level { get; set; }
 
     public string? ParentCategoryId { get; set; }
 
