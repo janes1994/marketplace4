@@ -1,38 +1,49 @@
-﻿@using static BlazorApp1.Components.Pages.Product
+﻿@using BlazorApp1.Components.Models
+@using BlazorApp1.Components.Services
+@inject CategoryService CategoryService
 
 <div>
+    <!-- Dropdown kategori utama -->
     <select @onchange="HandleSelection">
-        <option value="">Select Category</option>
+        <option value="" selected>Select Category</option>
         @foreach (var category in Categories)
         {
             <option value="@category.Id">@category.Name</option>
         }
     </select>
 
+    <!-- Dropdown subkategori -->
     @if (SelectedCategory?.Subcategories?.Count > 0)
     {
         <CategoryTes 
             Categories="SelectedCategory.Subcategories" 
-            OnCategorySelected="OnCategorySelected" 
-        />
+            OnCategorySelected="OnCategorySelected"
+            @key="SelectedCategory.Id" />
     }
 </div>
 
 @code {
-    [Parameter] public List<CategoryTesModel> Categories { get; set; } = new();
-    [Parameter] public EventCallback<CategoryTesModel> OnCategorySelected { get; set; }
+    [Parameter] public List<CategoryViewModel> Categories { get; set; } = new();
+    [Parameter] public EventCallback<CategoryViewModel> OnCategorySelected { get; set; }
 
-    private CategoryTesModel? SelectedCategory;
+    private CategoryViewModel? SelectedCategory;
 
-    private void HandleSelection(ChangeEventArgs e)
+    private async Task HandleSelection(ChangeEventArgs e)
     {
-        int selectedId = int.TryParse(e.Value?.ToString(), out var id) ? id : 0;
+        var selectedId = e.Value?.ToString();
+
+        // Reset selected category and force component re-render
+        if (SelectedCategory?.Id != selectedId)
+        {
+            SelectedCategory = null; // Reset dulu agar trigger re-render
+            StateHasChanged();       // Paksa re-render dulu sebelum assign baru
+        }
+
         SelectedCategory = Categories.FirstOrDefault(c => c.Id == selectedId);
 
         if (SelectedCategory != null)
         {
-            OnCategorySelected.InvokeAsync(SelectedCategory);
+            await OnCategorySelected.InvokeAsync(SelectedCategory);
         }
     }
-
 }
