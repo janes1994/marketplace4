@@ -100,27 +100,15 @@
                         <input class="form-control" @bind="productModel.Name" />
                         <ValidationMessage For="@(() => productModel.Name)" />
                     </div>
-                    @* <div>
-                        <label class="form-label">Category</label>
-                        <div class="mb-3">
-                            <ProductCategoryDropdown 
-                                ProductModel="@productModel"
-                            />
-                        </div>
-                    </div> *@
                     
                     <div>
                         <label class="form-label">Category</label>
-
-                        <CategoryTes 
-                            Categories="Categories" 
-                            OnCategorySelected="CategorySelected" 
-                        />
-
-                        @if (SelectedCategory != null)
-                        {
-                            <p>You selected: @SelectedCategory.Name</p>
-                        }
+                        <div class="mb-3">
+                            <ProductCategoryDropdown 
+                                Categories="Categories" 
+                                OnCategorySelected="CategorySelected" 
+                            />
+                        </div>
                     </div>
 
                     <div class="border p-3 mb-3">

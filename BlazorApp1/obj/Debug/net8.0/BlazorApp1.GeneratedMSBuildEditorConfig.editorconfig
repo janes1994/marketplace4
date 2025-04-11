@@ -26,10 +26,6 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9DYXRlZ29yeS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/Users/yanesreksandi/Test/BlazorApp/BlazorApp1/Components/Pages/CategoryTes.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9DYXRlZ29yeVRlcy5yYXpvcg==
-build_metadata.AdditionalFiles.CssScope = 
-
 [/Users/yanesreksandi/Test/BlazorApp/BlazorApp1/Components/Pages/CategoryTree.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9DYXRlZ29yeVRyZWUucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
