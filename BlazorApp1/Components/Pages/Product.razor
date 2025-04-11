@@ -15,44 +15,49 @@
 
 <style>
     .table-images {
-    display: flex;
-    gap: 5px;
+        display: flex;
+        gap: 5px;
     }
+
     .table-images img {
-    max-width: 80px;
-    max-height: 80px;
-    @* object-fit: cover; *@
-    border-radius: 5px;
-    border: 1px solid #ccc;
+        max-width: 80px;
+        max-height: 80px;
+        @* object-fit: cover; *@
+        border-radius: 5px;
+        border: 1px solid #ccc;
     }
+
     .image-preview-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
     }
+
     .image-preview {
-    position: relative;
-    display: inline-block;
+        position: relative;
+        display: inline-block;
     }
+
     .image-preview img {
-    max-width: 120px;
-    max-height: 120px;
-    @* object-fit: cover; *@
-    border: 1px solid #ccc;
-    border-radius: 5px;
+        max-width: 120px;
+        max-height: 120px;
+        @* object-fit: cover; *@
+        border: 1px solid #ccc;
+        border-radius: 5px;
     }
+
     .image-preview button {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background: red;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-size: 12px;
-    padding: 2px 5px;
-    border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: red;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 12px;
+        padding: 2px 5px;
+        border-radius: 50%;
     }
 </style>
 
@@ -156,24 +161,25 @@
         public List<string> Images { get; set; } = new();
 
         public bool IsHasVariant = false;
+        
         public ProductVariantView ProductVariantView { get; set; } = new();
 
         public ProductCategoryView Category { get; set; } = new();
     }
 
     public class ProductCategoryView
-{
-    public string? Id { get; set; }
-    public string? Name { get; set; }
-    public bool IsSelected { get; set; }
-    public string? ParentCategoryId { get; set; }
-    
-    // Current selected category
-    public ProductCategoryView? Category { get; set; }
-    
-    // Available options for this level
-    public List<ProductCategoryView> CategoryOptions { get; set; } = new();
-}
+    {
+        public string? Id { get; set; }
+        public string? Name { get; set; }
+        public bool IsSelected { get; set; }
+        public string? ParentCategoryId { get; set; }
+        
+        // Current selected category
+        public ProductCategoryView? Category { get; set; }
+        
+        // Available options for this level
+        public List<ProductCategoryView> CategoryOptions { get; set; } = new();
+    }
 
     public class ProductVariantView
     {
@@ -184,8 +190,11 @@
     private List<ProductView> products = new();
 
     private ProductView productModel = new();
+
     private Modal modal = default!;
+
     private string modalTitle = "Add Product";
+
     private bool isEditing = false;
 
     private async Task OnShowAddModal()
@@ -219,7 +228,6 @@
 
     private async Task SaveProduct()
     {
-
         if (isEditing)
         {
             var existingProduct = products.FirstOrDefault(p => p.Id == productModel.Id);
@@ -289,5 +297,3 @@
         SelectedCategory = category;
     }
 }
-
-
