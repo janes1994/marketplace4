@@ -2,8 +2,8 @@
 @using BlazorApp1.Components.Services
 
 <div>
+    <!-- Dropdown kategori utama -->
     <div class="mb-3">
-        <!-- Dropdown kategori utama -->
         <select class="form-select" @onchange="HandleSelection">
             <option value="" disabled selected>Select Category</option>
             @foreach (var category in Categories)
