@@ -150,11 +150,6 @@
         products = ProductService.ProductViews;
         var categoryView = CategoryService.BuildCategoryTree(CategoryService.CategoryViewModel);
         Categories = categoryView;
-
-        // tes
-        @* CategoryViewModel tes1 = CategoryService.GetCategoryById("iOS-1");
-        var tes2 = CategoryService.BuildNestedParentsWithSiblings(tes1, CategoryService.CategoryViewModel);
-        Categories = tes2; *@
     }
 
     public class ProductView
@@ -198,7 +193,7 @@
 
         var categoryView = CategoryService.BuildCategoryTree(CategoryService.CategoryViewModel);
         Categories = categoryView;
-        
+
         await modal.ShowAsync();
     }
 
