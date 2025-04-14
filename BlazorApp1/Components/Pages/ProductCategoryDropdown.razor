@@ -5,15 +5,15 @@
     <!-- Dropdown kategori utama -->
     <div class="mb-3">
         <select class="form-select" @onchange="HandleSelection">
-            <option value="" disabled selected>Select Category</option>
+            <option value="" disabled selected="@((SelectedCategory == null))">Select Category</option>
             @foreach (var category in Categories)
             {
-                <option value="@category.Id">@category.Name</option>
+                <option value="@category.Id" selected="@category.IsSelected">@category.Name</option>
             }
         </select>
     </div>
 
-    <!-- Dropdown subkategori -->
+    <!-- Dropdown subkategori jika ada -->
     @if (SelectedCategory?.Subcategories?.Count > 0)
     {
         <ProductCategoryDropdown 
@@ -29,22 +29,47 @@
 
     private CategoryViewModel? SelectedCategory;
 
+    protected override void OnInitialized()
+    {
+        // Cari kategori yang diset sebagai selected saat load
+        SelectedCategory = Categories.FirstOrDefault(c => c.IsSelected);
+
+        // Jika ditemukan dan ada subkategori yang aktif, render langsung
+        if (SelectedCategory == null)
+        {
+            SelectedCategory = FindSelectedCategoryRecursive(Categories);
+        }
+    }
+
+    private CategoryViewModel? FindSelectedCategoryRecursive(List<CategoryViewModel> categories)
+    {
+        foreach (var cat in categories)
+        {
+            if (cat.IsSelected)
+                return cat;
+
+            var found = FindSelectedCategoryRecursive(cat.Subcategories);
+            if (found != null)
+                return found;
+        }
+
+        return null;
+    }
+
     private async Task HandleSelection(ChangeEventArgs e)
     {
         var selectedId = e.Value?.ToString();
 
-        // Reset selected category and force component re-render
-        if (SelectedCategory?.Id != selectedId)
+        if (!string.IsNullOrEmpty(selectedId))
         {
-            SelectedCategory = null; // Reset dulu agar trigger re-render
-            StateHasChanged();       // Paksa re-render dulu sebelum assign baru
-        }
+            SelectedCategory = null;
+            StateHasChanged();
 
-        SelectedCategory = Categories.FirstOrDefault(c => c.Id == selectedId);
-
-        if (SelectedCategory != null)
-        {
-            await OnCategorySelected.InvokeAsync(SelectedCategory);
+            SelectedCategory = Categories.FirstOrDefault(c => c.Id == selectedId);
+            if (SelectedCategory != null)
+            {
+                await OnCategorySelected.InvokeAsync(SelectedCategory);
+            }
         }
     }
 }

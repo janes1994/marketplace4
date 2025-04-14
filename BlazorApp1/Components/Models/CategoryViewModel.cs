@@ -15,6 +15,8 @@ public class CategoryViewModel
     [Required(ErrorMessage = "Banner is required")]
     public string Banner { get; set; } = string.Empty;
 
+    public bool IsSelected = false;
+
     public string? ParentCategoryId { get; set; }
 
     public CategoryViewModel? ParentCategory { get; set; }

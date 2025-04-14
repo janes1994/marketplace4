@@ -110,7 +110,7 @@
                         <label class="form-label">Category</label>
                         <div class="mb-3">
                             <ProductCategoryDropdown 
-                                Categories="Categories" 
+                                Categories="Categories"
                                 OnCategorySelected="CategorySelected" 
                             />
                         </div>
@@ -148,7 +148,13 @@
     protected override void OnInitialized()
     {
         products = ProductService.ProductViews;
-        Categories = CategoryService.CategoryViewModel;
+        var categoryView = CategoryService.BuildCategoryTree(CategoryService.CategoryViewModel);
+        Categories = categoryView;
+
+        // tes
+        @* CategoryViewModel tes1 = CategoryService.GetCategoryById("iOS-1");
+        var tes2 = CategoryService.BuildNestedParentsWithSiblings(tes1, CategoryService.CategoryViewModel);
+        Categories = tes2; *@
     }
 
     public class ProductView
@@ -161,24 +167,10 @@
         public List<string> Images { get; set; } = new();
 
         public bool IsHasVariant = false;
-        
+
         public ProductVariantView ProductVariantView { get; set; } = new();
 
-        public ProductCategoryView Category { get; set; } = new();
-    }
-
-    public class ProductCategoryView
-    {
-        public string? Id { get; set; }
-        public string? Name { get; set; }
-        public bool IsSelected { get; set; }
-        public string? ParentCategoryId { get; set; }
-        
-        // Current selected category
-        public ProductCategoryView? Category { get; set; }
-        
-        // Available options for this level
-        public List<ProductCategoryView> CategoryOptions { get; set; } = new();
+        public CategoryViewModel Category { get; set; } = new();
     }
 
     public class ProductVariantView
@@ -203,6 +195,10 @@
         modalTitle = "Add Product";
         isEditing = false;
         SelectedCategory = new CategoryViewModel();
+
+        var categoryView = CategoryService.BuildCategoryTree(CategoryService.CategoryViewModel);
+        Categories = categoryView;
+        
         await modal.ShowAsync();
     }
 
@@ -218,6 +214,9 @@
         };
         modalTitle = "Edit Product";
         isEditing = true;
+
+        Categories = CategoryService.BuildNestedParentsWithSiblings(productModel.Category, CategoryService.CategoryViewModel);
+
         await modal.ShowAsync();
     }
 
@@ -235,7 +234,7 @@
             {
                 existingProduct.Name = productModel.Name;
                 existingProduct.Images = new List<string>(productModel.Images);
-                existingProduct.Category = productModel.Category;
+                existingProduct.Category = SelectedCategory ?? new CategoryViewModel();
             }
         }
         else
@@ -246,7 +245,7 @@
                 Name = productModel.Name,
                 Images = new List<string>(productModel.Images),
                 ProductVariantView = productModel.ProductVariantView,
-                Category = productModel.Category
+                Category = SelectedCategory ?? new CategoryViewModel()
             });
         }
 
