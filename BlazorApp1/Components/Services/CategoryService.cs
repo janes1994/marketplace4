@@ -204,6 +204,8 @@ namespace BlazorApp1.Components.Services
                     category.Id = Guid.NewGuid().ToString();
                     category.ParentCategory = parent;
                     parent.Subcategories.Add(category);
+
+                    CategoryViewModel.Add(category);
                 }
             }
             OnAction?.Invoke();
@@ -375,6 +377,40 @@ namespace BlazorApp1.Components.Services
             parents.Reverse(); // supaya dari root ke bawah
             parents.Add(category); // terakhir adalah kategori yang dipilih
             return parents;
+        }
+
+        public void AddCategoryRow(CategoryViewModel category, string parentPath, List<CategorySimple> rows)
+        {
+            string fullPath = string.IsNullOrEmpty(parentPath) ? category.Name : $"{parentPath}/{category.Name}";
+
+            var temp = new CategorySimple
+            {
+                Id = category.Id,
+                Name = fullPath,
+                categoryViewModel = category
+            };
+
+            rows.Add(temp);
+
+            foreach (var subcategory in category.Subcategories)
+            {
+                AddCategoryRow(subcategory, fullPath, rows);
+            }
+        }
+
+        public string GetCategoryFullPath(string id)
+        {
+            CategoryViewModel? categoryVM = GetCategoryById(id);
+            List<CategorySimple> categorySimples = new();
+            List<CategoryViewModel> categoryModel = BuildCategoryTree(CategoryViewModel);
+            foreach (var category in categoryModel)
+            {
+                AddCategoryRow(category, "", categorySimples);
+            }
+
+            CategorySimple? result = categorySimples.Where(i => i.Id == categoryVM.Id).FirstOrDefault();
+            string result2 = result.Name;
+            return result2;
         }
     }
 }

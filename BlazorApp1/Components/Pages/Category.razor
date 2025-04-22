@@ -67,43 +67,22 @@
         GetCategoryRows();
     }
 
-    public class CategorySimple
-    {
-        public string? Id { get; set; }
-        public string? Name { get; set; }
-        public CategoryViewModel categoryViewModel { get; set; } = new();
-    }
     private List<CategorySimple> rows { get; set; } = [];
+
     private void GetCategoryRows()
     {
         rows.Clear();
-        foreach (var category in CategoryService.CategoryViewModel)
+        var categoryModel = CategoryService.BuildCategoryTree(CategoryService.CategoryViewModel);
+        foreach (var category in categoryModel)
         {
-            AddCategoryRow(category, "");
-        }
-    }
-
-    private void AddCategoryRow(CategoryViewModel category, string parentPath)
-    {
-        string fullPath = string.IsNullOrEmpty(parentPath) ? category.Name : $"{parentPath}/{category.Name}";
-
-        var temp = new CategorySimple
-        {
-            Id = category.Id,
-            Name = fullPath,
-            categoryViewModel = category
-        };
-
-        rows.Add(temp);
-
-        foreach (var subcategory in category.Subcategories)
-        {
-            AddCategoryRow(subcategory, fullPath);
+            CategoryService.AddCategoryRow(category, "", rows);
         }
     }
 
     private Modal modalCategory = default!;
+
     private string modalTitle = "Add Category";
+
     private CategoryViewModel categoryModel = new();
 
     private async Task OnShowAddModal()

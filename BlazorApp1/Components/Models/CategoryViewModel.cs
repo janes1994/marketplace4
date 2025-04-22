@@ -23,3 +23,10 @@ public class CategoryViewModel
 
     public List<CategoryViewModel> Subcategories { get; set; } = [];
 }
+
+public class CategorySimple
+{
+    public string? Id { get; set; }
+    public string? Name { get; set; }
+    public CategoryViewModel categoryViewModel { get; set; } = new();
+}

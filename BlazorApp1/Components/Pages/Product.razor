@@ -68,6 +68,7 @@
     <thead>
         <tr>
             <th>Name</th>
+            <th>Category</th>
             <th>Images</th>
             <th>Actions</th>
         </tr>
@@ -77,6 +78,7 @@
         {
             <tr>
                 <td>@product.Name</td>
+                <td>@CategoryService.GetCategoryFullPath(product.Category.Id)</td>
                 <td>
                     <div class="table-images">
                         @foreach (var img in product.Images)
