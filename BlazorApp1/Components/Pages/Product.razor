@@ -68,6 +68,7 @@
     <thead>
         <tr>
             <th>Name</th>
+            <th>Price</th>
             <th>Category</th>
             <th>Images</th>
             <th>Actions</th>
@@ -78,6 +79,7 @@
         {
             <tr>
                 <td>@product.Name</td>
+                <td>@product.Price</td>
                 <td>@CategoryService.GetCategoryFullPath(product.Category.Id)</td>
                 <td>
                     <div class="table-images">
@@ -106,6 +108,12 @@
                         <label class="form-label">Name *</label>
                         <input class="form-control" @bind="productModel.Name" />
                         <ValidationMessage For="@(() => productModel.Name)" />
+                    </div>
+
+                    <div>
+                        <label class="form-label">Price *</label>
+                        <input class="form-control" @bind="productModel.Price" />
+                        <ValidationMessage For="@(() => productModel.Price)" />
                     </div>
                     
                     <div>
@@ -158,8 +166,11 @@
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
 
-        [Required(ErrorMessage = "Product name is required.")]
+        [Required(ErrorMessage = "Product Name is required.")]
         public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Product Price is required.")]
+        public decimal Price { get; set; }
 
         public List<string> Images { get; set; } = new();
 
@@ -205,6 +216,7 @@
         {
             Id = product.Id,
             Name = product.Name,
+            Price = product.Price,
             Images = new List<string>(product.Images),
             ProductVariantView = product.ProductVariantView,
             Category = product.Category
@@ -230,6 +242,7 @@
             if (existingProduct != null)
             {
                 existingProduct.Name = productModel.Name;
+                existingProduct.Price = productModel.Price;
                 existingProduct.Images = new List<string>(productModel.Images);
                 existingProduct.Category = SelectedCategory ?? new CategoryViewModel();
             }
@@ -240,6 +253,7 @@
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = productModel.Name,
+                Price = productModel.Price,
                 Images = new List<string>(productModel.Images),
                 ProductVariantView = productModel.ProductVariantView,
                 Category = SelectedCategory ?? new CategoryViewModel()
