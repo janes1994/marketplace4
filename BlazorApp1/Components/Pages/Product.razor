@@ -112,7 +112,7 @@
 
                     <div>
                         <label class="form-label">Price *</label>
-                        <input class="form-control" @bind="productModel.Price" />
+                        <input class="form-control" @bind="productModel.Price" disabled="@DisablePriceFromVariant"/>
                         <ValidationMessage For="@(() => productModel.Price)" />
                     </div>
                     
@@ -145,7 +145,8 @@
                         <ProductVariant 
                             ProductVariantView="@productModel.ProductVariantView"
                             SetVariantTypeName="SetVariantTypeName" 
-                            SetManageVariant="SetManageVariant"/>
+                            SetManageVariant="SetManageVariant"
+                            DisablePriceWhenVariantChecked="DisablePriceWhenVariantChecked"/>
                     </div>
                 </div>
             </div>
@@ -305,5 +306,12 @@
     private void CategorySelected(CategoryViewModel category)
     {
         SelectedCategory = category;
+    }
+
+    private bool DisablePriceFromVariant = false;
+
+    private void DisablePriceWhenVariantChecked(bool enable)
+    {
+        DisablePriceFromVariant = enable;
     }
 }

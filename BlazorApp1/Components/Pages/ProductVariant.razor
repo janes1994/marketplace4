@@ -117,7 +117,8 @@
 </style>
 
 <div class="mb-3 form-check">
-    <input class="form-check-input" type="checkbox" id="createVariantCB" @bind="isChecked"/>
+    <input class="form-check-input" type="checkbox" id="createVariantCB"
+           @onchange="OnCheckboxChanged" checked="@isChecked" />
     <label class="form-check-label" for="createVariantCB">Create variant</label>
 </div>
 
@@ -229,6 +230,8 @@
     [Parameter] public EventCallback<List<VariantTypeName>> SetVariantTypeName { get; set; }
     [Parameter] public EventCallback<List<ManageVariant>> SetManageVariant { get; set; }
     [Parameter] public ProductVariantView productVariantView { get; set; } = new();
+    [Parameter] public EventCallback<bool> DisablePriceWhenVariantChecked { get; set; }
+
 
     protected override void OnInitialized()
     {
@@ -518,7 +521,11 @@
         manage.IsMainProduct = isChecked;
     }
 
-    
+    private async Task OnCheckboxChanged(ChangeEventArgs e)
+    {
+        isChecked = (bool)e.Value!;
+        await DisablePriceWhenVariantChecked.InvokeAsync(isChecked);
+    }
 
 }
 
