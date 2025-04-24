@@ -119,9 +119,9 @@
                             step="any"
                             @bind="BoundPrice"
                             disabled="@DisablePriceFromVariant"/>
-                        <ValidationMessage For="@(() => productModel.Price)" />
+                            <ValidationMessage For="@(() => productModel.Price)" />                  
                     </div>
-                    
+
                     <div>
                         <label class="form-label">Category</label>
                         <div class="mb-3">
@@ -129,6 +129,10 @@
                                 Categories="Categories"
                                 OnCategorySelected="CategorySelected" 
                             />
+                        @if (!string.IsNullOrEmpty(validationMessage))
+                        {
+                            <div class="text-danger">@validationMessage</div>
+                        }
                         </div>
                     </div>
 
@@ -242,8 +246,35 @@
         await modal.HideAsync();
     }
 
+    private string validationMessage = null;
+
+    private bool ValidateCategoryDropdown(CategoryViewModel selectedCategory)
+    {
+        bool IsCategoryIdNull = string.IsNullOrEmpty(SelectedCategory?.Id);
+        bool IsLeafCategory = SelectedCategory?.Subcategories?.Count > 0;
+
+        if (IsCategoryIdNull)
+        {
+            validationMessage = "Please select category.";
+            return false;
+        }
+
+        if (IsLeafCategory)
+        {
+            validationMessage = "Please select the subcategory.";
+            return false;
+        }
+
+        validationMessage = null;
+
+        return true;
+    }
+
     private async Task SaveProduct()
     {
+        if(!ValidateCategoryDropdown(SelectedCategory))
+            return;
+
         if (isEditing)
         {
             var existingProduct = products.FirstOrDefault(p => p.Id == productModel.Id);
