@@ -112,7 +112,13 @@
 
                     <div>
                         <label class="form-label">Price *</label>
-                        <input class="form-control" @bind="productModel.Price" disabled="@DisablePriceFromVariant"/>
+                        <input 
+                            class="form-control" 
+                            type="number"
+                            min=0
+                            step="any"
+                            @bind="BoundPrice"
+                            disabled="@DisablePriceFromVariant"/>
                         <ValidationMessage For="@(() => productModel.Price)" />
                     </div>
                     
@@ -146,7 +152,8 @@
                             ProductVariantView="@productModel.ProductVariantView"
                             SetVariantTypeName="SetVariantTypeName" 
                             SetManageVariant="SetManageVariant"
-                            DisablePriceWhenVariantChecked="DisablePriceWhenVariantChecked"/>
+                            DisablePriceWhenVariantChecked="DisablePriceWhenVariantChecked"
+                            SetPriceFromVariantPrice="SetPriceFromVariantPrice"/>
                     </div>
                 </div>
             </div>
@@ -313,5 +320,28 @@
     private void DisablePriceWhenVariantChecked(bool enable)
     {
         DisablePriceFromVariant = enable;
+    }
+
+    private decimal BoundPrice
+    {
+        get => MainVariantPrice != 0 ? MainVariantPrice : productModel.Price;
+        set
+        {
+            if (MainVariantPrice != 0)
+            {
+                MainVariantPrice = value;
+            }
+            else
+            {
+                productModel.Price = value;
+            }
+        }
+    }
+
+    private decimal MainVariantPrice { get; set; }
+
+    private void SetPriceFromVariantPrice(decimal variantPrice)
+    {
+        MainVariantPrice = variantPrice;
     }
 }

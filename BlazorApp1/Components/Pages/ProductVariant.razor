@@ -1,4 +1,6 @@
-﻿@using static BlazorApp1.Components.Pages.Product
+﻿@using System.Text.RegularExpressions
+@using System.Globalization
+@using static BlazorApp1.Components.Pages.Product
 @rendermode InteractiveServer
 
 <style>
@@ -211,7 +213,17 @@
 
                 <div class="mb-3">
                     <label class="form-label">Price</label>
-                    <input class="form-control" @oninput="(e) => HandleInputPriceManageVariant(i, e.Value?.ToString())" @bind="i.Price"/>
+                    <div class="mb-3">
+                    <label class="form-label">Price</label>
+                    <input 
+                        class="form-control" 
+                        type="number"
+                        min="0"
+                        step="any"
+                        @bind="i.Price"
+                        @oninput="@(e => HandleInputPriceManageVariant(i, e.Value))" />
+                </div>
+
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Stock</label>
@@ -231,6 +243,7 @@
     [Parameter] public EventCallback<List<ManageVariant>> SetManageVariant { get; set; }
     [Parameter] public ProductVariantView productVariantView { get; set; } = new();
     [Parameter] public EventCallback<bool> DisablePriceWhenVariantChecked { get; set; }
+    [Parameter] public EventCallback<decimal> SetPriceFromVariantPrice { get; set; }
 
 
     protected override void OnInitialized()
@@ -266,7 +279,7 @@
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string? Name { get; set; }
-        public string? Price { get; set; }
+        public decimal? Price { get; set; }
         public string? Stock { get; set; }
         public string? Weight { get; set; }
         public bool IsMainProduct { get; set; }
@@ -345,7 +358,7 @@
         public string? FirstVariantName { get; set; }
         public string? SecondVariantId { get; set; }
         public string? SecondVariantName { get; set; }
-        public string? Price { get; set; }
+        public decimal Price { get; set; }
         public string? Stock { get; set; }
         public string? Weight { get; set; }
         public bool IsMainProduct { get; set; }
@@ -385,7 +398,7 @@
                     FirstVariantName = subVariant.Name,
                     SecondVariantId = null,  // No second variant
                     SecondVariantName = null,
-                    Price = manageVariantTemp?.Price ?? string.Empty,
+                    Price = manageVariantTemp?.Price ?? 0,
                     Stock = manageVariantTemp?.Stock ?? string.Empty,
                     Weight = manageVariantTemp?.Weight ?? string.Empty,
                     IsMainProduct = manageVariantTemp?.IsMainProduct ?? false,
@@ -411,7 +424,7 @@
                         FirstVariantName = color?.Name,
                         SecondVariantId = size.Id,
                         SecondVariantName = size.Name,
-                        Price = manageVariantTemp?.Price ?? string.Empty,
+                        Price = manageVariantTemp?.Price ?? 0,
                         Stock = manageVariantTemp?.Stock ?? string.Empty,
                         Weight = manageVariantTemp?.Weight ?? string.Empty,
                         IsMainProduct = color?.IsMainProduct ?? false
@@ -488,12 +501,24 @@
         SetVariantTypeName.InvokeAsync(VariantType);
     }
 
-    private void HandleInputPriceManageVariant(ManageVariant manage, string? value)
+    private void HandleInputPriceManageVariant(ManageVariant manage, object value)
     {
-        var temp = ManageVariants.FirstOrDefault(i => i.Id == manage.Id);
-        if (temp == null) return;
-        temp.Price = value;
+        var input = value?.ToString() ?? "";
+
+        if (decimal.TryParse(input, NumberStyles.Number, CultureInfo.InvariantCulture, out var price))
+        {
+            var temp = ManageVariants.FirstOrDefault(i => i.Id == manage.Id);
+            if (temp == null) return;
+
+            temp.Price = price;
+
+            if (manage.IsMainProduct && price != 0)
+            {
+                SetPriceFromVariantPrice.InvokeAsync(price);
+            }
+        }
     }
+
 
     private void HandleInputStockManageVariant(ManageVariant manage, string? value)
     {
@@ -519,6 +544,8 @@
         }
 
         manage.IsMainProduct = isChecked;
+
+        SetPriceFromVariantPrice.InvokeAsync(manage.Price);
     }
 
     private async Task OnCheckboxChanged(ChangeEventArgs e)
