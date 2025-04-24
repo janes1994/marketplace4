@@ -1,5 +1,6 @@
 ﻿@using System.Text.RegularExpressions
 @using System.Globalization
+@using System.ComponentModel.DataAnnotations
 @using static BlazorApp1.Components.Pages.Product
 @rendermode InteractiveServer
 
@@ -213,8 +214,6 @@
 
                 <div class="mb-3">
                     <label class="form-label">Price</label>
-                    <div class="mb-3">
-                    <label class="form-label">Price</label>
                     <input 
                         class="form-control" 
                         type="number"
@@ -224,14 +223,25 @@
                         @oninput="@(e => HandleInputPriceManageVariant(i, e.Value))" />
                 </div>
 
-                </div>
                 <div class="mb-3">
                     <label class="form-label">Stock</label>
-                    <input class="form-control" @oninput="(e) => HandleInputStockManageVariant(i, e.Value?.ToString())" @bind="i.Stock"/>
+                    <input
+                        class="form-control"
+                        type="number" 
+                        min="0" 
+                        step="1"
+                        @bind="i.Stock"
+                        @oninput="@(e => HandleInputStockManageVariant(i, e.Value))" />
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Weight</label>
-                    <input class="form-control" @oninput="(e) => HandleInputWeightManageVariant(i, e.Value?.ToString())" @bind="i.Weight"/>
+                    <input 
+                        class="form-control" 
+                        type="number" 
+                        min="0" 
+                        step="any"
+                        @bind="i.Weight"
+                        @oninput="@(e => HandleInputWeightManageVariant(i, e.Value))" />
                 </div>
             }
         </div>
@@ -358,9 +368,16 @@
         public string? FirstVariantName { get; set; }
         public string? SecondVariantId { get; set; }
         public string? SecondVariantName { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Price cannot be negative.")]
         public decimal Price { get; set; }
-        public string? Stock { get; set; }
-        public string? Weight { get; set; }
+
+        [Range(0, int.MaxValue, ErrorMessage = "Stock cannot be negative.")]
+        public int Stock { get; set; }
+
+        [Range(0, double.MaxValue, ErrorMessage = "Weight cannot be negative.")]
+        public decimal Weight { get; set; }
+
         public bool IsMainProduct { get; set; }
     }
 
@@ -399,8 +416,8 @@
                     SecondVariantId = null,  // No second variant
                     SecondVariantName = null,
                     Price = manageVariantTemp?.Price ?? 0,
-                    Stock = manageVariantTemp?.Stock ?? string.Empty,
-                    Weight = manageVariantTemp?.Weight ?? string.Empty,
+                    Stock = manageVariantTemp?.Stock ?? 0,
+                    Weight = manageVariantTemp?.Weight ?? 0,
                     IsMainProduct = manageVariantTemp?.IsMainProduct ?? false,
                 };
 
@@ -425,8 +442,8 @@
                         SecondVariantId = size.Id,
                         SecondVariantName = size.Name,
                         Price = manageVariantTemp?.Price ?? 0,
-                        Stock = manageVariantTemp?.Stock ?? string.Empty,
-                        Weight = manageVariantTemp?.Weight ?? string.Empty,
+                        Stock = manageVariantTemp?.Stock ?? 0,
+                        Weight = manageVariantTemp?.Weight ?? 0,
                         IsMainProduct = color?.IsMainProduct ?? false
                     };
 
@@ -512,7 +529,7 @@
 
             temp.Price = price;
 
-            if (manage.IsMainProduct && price != 0)
+            if (manage.IsMainProduct)
             {
                 SetPriceFromVariantPrice.InvokeAsync(price);
             }
@@ -520,18 +537,30 @@
     }
 
 
-    private void HandleInputStockManageVariant(ManageVariant manage, string? value)
+    private void HandleInputStockManageVariant(ManageVariant manage, object value)
     {
-        var temp = ManageVariants.FirstOrDefault(i => i.Id == manage.Id);
-        if (temp == null) return;
-        temp.Stock = value;
+        var input = value?.ToString() ?? "";
+
+        if (int.TryParse(input, NumberStyles.Number, CultureInfo.InvariantCulture, out var stock))
+        {
+            var temp = ManageVariants.FirstOrDefault(i => i.Id == manage.Id);
+            if (temp == null) return;
+
+            temp.Stock = stock;
+        }
     }
 
-    private void HandleInputWeightManageVariant(ManageVariant manage, string? value)
+    private void HandleInputWeightManageVariant(ManageVariant manage, object value)
     {
-        var temp = ManageVariants.FirstOrDefault(i => i.Id == manage.Id);
-        if (temp == null) return;
-        temp.Weight = value;
+        var input = value?.ToString() ?? "";
+
+        if (decimal.TryParse(input, NumberStyles.Number, CultureInfo.InvariantCulture, out var weight))
+        {
+            var temp = ManageVariants.FirstOrDefault(i => i.Id == manage.Id);
+            if (temp == null) return;
+
+            temp.Weight = weight;
+        }
     }
 
     private void HandleInputSetAsMainProductManageVariant(ManageVariant manage, ChangeEventArgs e)
