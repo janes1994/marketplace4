@@ -219,11 +219,20 @@
         var categoryView = CategoryService.BuildCategoryTree(CategoryService.CategoryViewModel);
         Categories = categoryView;
 
+        validationMessage = null;
+
+        DisablePriceFromVariant = false;
+
+        MainVariantPrice = 0;
+
         await modal.ShowAsync();
     }
 
     private async Task OnEditProduct(ProductView product)
     {
+        DisablePriceFromVariant = false;
+        MainVariantPrice = 0;
+
         productModel = new ProductView
         {
             Id = product.Id,
@@ -238,6 +247,9 @@
 
         Categories = CategoryService.BuildNestedParentsWithSiblings(productModel.Category, CategoryService.CategoryViewModel);
 
+        if (product?.ProductVariantView?.VariantTypeNames?.Count > 0)
+            DisablePriceFromVariant = true;
+
         await modal.ShowAsync();
     }
 
@@ -248,7 +260,7 @@
 
     private string validationMessage = null;
 
-    private bool ValidateCategoryDropdown(CategoryViewModel selectedCategory)
+    private bool ValidateCategoryDropdown()
     {
         bool IsCategoryIdNull = string.IsNullOrEmpty(SelectedCategory?.Id);
         bool IsLeafCategory = SelectedCategory?.Subcategories?.Count > 0;
@@ -272,27 +284,34 @@
 
     private async Task SaveProduct()
     {
-        if(!ValidateCategoryDropdown(SelectedCategory))
-            return;
-
         if (isEditing)
         {
+            if (!string.IsNullOrEmpty(SelectedCategory?.Id))
+            {
+                if(!ValidateCategoryDropdown())
+                    return;
+            }
+
             var existingProduct = products.FirstOrDefault(p => p.Id == productModel.Id);
+
             if (existingProduct != null)
             {
                 existingProduct.Name = productModel.Name;
-                existingProduct.Price = productModel.Price;
+                existingProduct.Price = BoundPrice;
                 existingProduct.Images = new List<string>(productModel.Images);
-                existingProduct.Category = SelectedCategory ?? new CategoryViewModel();
+                existingProduct.Category = SelectedCategory?.Id != null ? SelectedCategory : productModel.Category;
             }
         }
         else
         {
+            if(!ValidateCategoryDropdown())
+                return;
+                
             products.Add(new ProductView
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = productModel.Name,
-                Price = productModel.Price,
+                Price = BoundPrice,
                 Images = new List<string>(productModel.Images),
                 ProductVariantView = productModel.ProductVariantView,
                 Category = SelectedCategory ?? new CategoryViewModel()
@@ -344,6 +363,11 @@
     private void CategorySelected(CategoryViewModel category)
     {
         SelectedCategory = category;
+        
+        if (validationMessage != null)
+        {
+            validationMessage = null;
+        }
     }
 
     private bool DisablePriceFromVariant = false;
