@@ -393,7 +393,7 @@
             return;
         }
 
-        if (VariantType[0]?.IsSelected == false && VariantType[1]?.IsSelected == false)
+        if (VariantType != null && VariantType?.Count > 1 && VariantType[0]?.IsSelected == false && VariantType[1]?.IsSelected == false)
         {
             ManageVariants = [];
             SetManageVariant.InvokeAsync(ManageVariants);
